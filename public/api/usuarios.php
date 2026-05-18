@@ -59,14 +59,17 @@ try {
         lc_json(['ok' => true]);
     }
 
-    // ---------- LISTAR (admin) ----------
+    // ---------- LISTAR (admin do tenant) ----------
     if ($method === 'GET' && $acao === null && $id === null) {
         exigir_admin($me);
-        $stmt = $db->query("SELECT id, email, nome, papel, created_at, last_login_at FROM labclock_usuarios ORDER BY created_at DESC");
+        $stmt = $db->prepare("SELECT id, email, nome, papel, created_at, last_login_at
+                              FROM labclock_usuarios WHERE tenant_id = :tid
+                              ORDER BY created_at DESC");
+        $stmt->execute([':tid' => (int) $me['tenant_id']]);
         lc_json(['usuarios' => $stmt->fetchAll()]);
     }
 
-    // ---------- CRIAR (admin) ----------
+    // ---------- CRIAR (admin do tenant) ----------
     if ($method === 'POST' && $acao === null) {
         exigir_admin($me);
         $b = lc_input();
@@ -81,12 +84,13 @@ try {
         if (!in_array($papel, ['tecnico', 'admin'], true)) $papel = 'tecnico';
 
         try {
-            $stmt = $db->prepare("INSERT INTO labclock_usuarios (email, senha_hash, nome, papel) VALUES (:e, :h, :n, :p)");
+            $stmt = $db->prepare("INSERT INTO labclock_usuarios (tenant_id, email, senha_hash, nome, papel) VALUES (:tid, :e, :h, :n, :p)");
             $stmt->execute([
-                ':e' => $email,
-                ':h' => lc_hash_senha($senha),
-                ':n' => $nome,
-                ':p' => $papel,
+                ':tid' => (int) $me['tenant_id'],
+                ':e'   => $email,
+                ':h'   => lc_hash_senha($senha),
+                ':n'   => $nome,
+                ':p'   => $papel,
             ]);
             $newId = (int) $db->lastInsertId();
             lc_audit('usuario.criar', 'usuario', $newId, ['email' => $email, 'nome' => $nome, 'papel' => $papel]);
@@ -99,17 +103,19 @@ try {
         }
     }
 
-    // ---------- DELETAR (admin; não pode remover a si próprio) ----------
+    // ---------- DELETAR (admin do tenant; não pode remover a si próprio) ----------
     if ($method === 'DELETE' && $id !== null) {
         exigir_admin($me);
         if ($id === (int) $me['id']) lc_json(['error' => 'não pode remover a si mesmo'], 422);
         // Captura email antes de deletar pra registrar snapshot no audit.
-        $info = $db->prepare("SELECT email, nome FROM labclock_usuarios WHERE id = :id");
-        $info->execute([':id' => $id]);
+        // Restringe ao tenant — admin não pode deletar user de outro tenant.
+        $info = $db->prepare("SELECT email, nome FROM labclock_usuarios WHERE id = :id AND tenant_id = :tid");
+        $info->execute([':id' => $id, ':tid' => (int) $me['tenant_id']]);
         $alvo = $info->fetch();
-        $stmt = $db->prepare("DELETE FROM labclock_usuarios WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-        if ($stmt->rowCount() > 0 && $alvo) {
+        if (!$alvo) lc_json(['error' => 'usuário não encontrado'], 404);
+        $stmt = $db->prepare("DELETE FROM labclock_usuarios WHERE id = :id AND tenant_id = :tid");
+        $stmt->execute([':id' => $id, ':tid' => (int) $me['tenant_id']]);
+        if ($stmt->rowCount() > 0) {
             lc_audit('usuario.deletar', 'usuario', $id, ['email' => $alvo['email'], 'nome' => $alvo['nome']]);
         }
         lc_json(['ok' => true, 'affected' => $stmt->rowCount()]);

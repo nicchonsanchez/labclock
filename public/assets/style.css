@@ -731,6 +731,224 @@ img { display: block; max-width: 100%; height: auto; }
 .login-link:hover { background: var(--color-bordo); color: var(--color-bg); }
 
 
+/* Landing ============================================= */
+.landing-body { background: var(--color-bg); }
+
+.landing-header {
+  max-width: 72rem;
+  padding: 1.5rem 2rem;
+}
+.landing-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+  margin-right: 1rem;
+}
+.landing-nav .link-nav {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+.landing-nav .link-nav:hover { color: var(--color-bordo); }
+
+.landing-main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+.landing-hero {
+  padding: 4rem 0 5rem;
+  text-align: center;
+}
+.landing-hero h1 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin: 0.75rem 0 1.5rem;
+  color: var(--color-text);
+}
+.landing-hero .lede {
+  max-width: 38rem;
+  margin: 0 auto 2rem;
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+.landing-cta {
+  display: flex;
+  gap: 0.875rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.875rem;
+}
+.btn-grande {
+  font-size: 1rem;
+  padding: 0.875rem 1.875rem;
+  border-radius: 10px;
+}
+.landing-cta-hint {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  letter-spacing: 0.04em;
+}
+
+.landing-secao {
+  padding: 4rem 0;
+  border-top: 1px solid var(--color-border);
+}
+.landing-secao-alt { background: var(--color-surface); border-radius: 24px; padding: 4rem 2rem; border-top: none; margin-top: 0; }
+.landing-secao-final { text-align: center; }
+.landing-secao-titulo {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  text-align: center;
+  margin-bottom: 2.5rem;
+  font-weight: 500;
+}
+
+.landing-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+.landing-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+.landing-card,
+.landing-feature {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5rem 1.5rem 1.75rem;
+}
+.landing-secao-alt .landing-card,
+.landing-secao-alt .landing-feature {
+  background: var(--color-bg);
+}
+.landing-card h3,
+.landing-feature h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+.landing-card p,
+.landing-feature p {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.landing-passos {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+.landing-passos li {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.landing-passos li:last-child { border-bottom: none; }
+.passo-num {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--color-bordo);
+  color: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 1rem;
+}
+.landing-passos h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.125rem;
+  margin-bottom: 0.25rem;
+  color: var(--color-text);
+}
+.landing-passos p {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+.landing-passos code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: var(--color-surface);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  color: var(--color-bordo);
+}
+
+.landing-footer {
+  border-top: 1px solid var(--color-border);
+  padding: 2rem 0 0;
+  text-align: center;
+  color: var(--color-text-dim);
+  font-size: 0.875rem;
+}
+.landing-footer a { color: var(--color-bordo); border-bottom: 1px dotted; }
+.landing-footer a:hover { border-bottom-style: solid; }
+
+@media (max-width: 800px) {
+  .landing-grid-3, .landing-grid-2 { grid-template-columns: 1fr; }
+  .landing-secao { padding: 3rem 0; }
+  .landing-hero { padding: 3rem 0 4rem; }
+  .landing-main { padding: 0 1.25rem 3rem; }
+  .landing-header { padding: 1rem 1.25rem; }
+}
+
+/* Signup ============================================== */
+.card-signup { max-width: 32rem; }
+.signup-fieldset {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.signup-fieldset legend {
+  padding: 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+.field-hint {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-dim);
+  letter-spacing: 0.04em;
+}
+.login-footer {
+  margin-top: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.login-footer a { color: var(--color-bordo); border-bottom: 1px dotted; }
+.login-footer a:hover { border-bottom-style: solid; }
+
 /* Auditoria (admin) ==================================== */
 .bloco-filtros {
   background: var(--color-surface);

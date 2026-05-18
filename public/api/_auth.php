@@ -28,17 +28,27 @@ function lc_session_start(): void {
     session_start();
 }
 
-// Devolve user logado (array) ou null.
+// Devolve user logado (array com tenant_id + tenant_slug) ou null.
 function lc_user(): ?array {
     lc_session_start();
     $id = $_SESSION['user_id'] ?? null;
     if (!$id) return null;
     static $cache = null;
     if ($cache !== null && $cache['id'] === $id) return $cache;
-    $stmt = lc_db()->prepare("SELECT id, email, nome, papel, created_at FROM labclock_usuarios WHERE id = :id");
+    $stmt = lc_db()->prepare("SELECT u.id, u.email, u.nome, u.papel, u.created_at, u.tenant_id,
+                                     t.slug AS tenant_slug, t.nome AS tenant_nome
+                              FROM labclock_usuarios u
+                              LEFT JOIN labclock_tenants t ON t.id = u.tenant_id
+                              WHERE u.id = :id");
     $stmt->execute([':id' => $id]);
     $u = $stmt->fetch();
     return $cache = ($u ?: null);
+}
+
+// Atalho: tenant_id do user logado. 0 se anônimo.
+function lc_tenant_id(): int {
+    $u = lc_user();
+    return $u ? (int) $u['tenant_id'] : 0;
 }
 
 // Exige login no endpoint. Devolve user. 401 se ausente.
@@ -70,16 +80,30 @@ function lc_verifica_senha(string $senha, string $armazenado): bool {
     return hash_equals($hash, $calc);
 }
 
-// Tenta logar. Retorna user ou null.
+// Tenta logar. Retorna user (com tenant_slug + tenant_nome) ou null.
+// Bloqueia login se tenant estiver suspenso.
 function lc_login(string $email, string $senha): ?array {
-    $stmt = lc_db()->prepare("SELECT id, email, nome, papel, senha_hash FROM labclock_usuarios WHERE email = :e");
+    $stmt = lc_db()->prepare("SELECT u.id, u.email, u.nome, u.papel, u.senha_hash, u.tenant_id,
+                                     t.slug AS tenant_slug, t.nome AS tenant_nome, t.status AS tenant_status
+                              FROM labclock_usuarios u
+                              LEFT JOIN labclock_tenants t ON t.id = u.tenant_id
+                              WHERE u.email = :e");
     $stmt->execute([':e' => strtolower(trim($email))]);
     $u = $stmt->fetch();
     if (!$u || !lc_verifica_senha($senha, $u['senha_hash'])) return null;
+    if (!empty($u['tenant_status']) && $u['tenant_status'] !== 'ativo') return null;
+
     lc_session_start();
     session_regenerate_id(true); // anti session fixation
     $_SESSION['user_id'] = (int) $u['id'];
-    unset($u['senha_hash']);
+
+    // Atualiza last_login_at (best-effort)
+    try {
+        lc_db()->prepare("UPDATE labclock_usuarios SET last_login_at = NOW() WHERE id = :id")
+               ->execute([':id' => (int) $u['id']]);
+    } catch (\Throwable $e) { /* nao bloqueia login */ }
+
+    unset($u['senha_hash'], $u['tenant_status']);
     return $u;
 }
 

@@ -3,111 +3,158 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LabClock — Central de cronômetros</title>
+  <title>LabClock — Cronômetros multi-dispositivo pra laboratórios e cozinhas</title>
 
   <meta name="theme-color" content="#F5F0E6" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#11141C" media="(prefers-color-scheme: dark)">
 
-  <meta name="description" content="Cronômetros multi-dispositivo para laboratório químico e contextos com múltiplos ensaios paralelos.">
-  <meta property="og:title" content="LabClock — Central de cronômetros">
-  <meta property="og:description" content="Multi-dispositivo. Cronômetros compartilháveis por URL.">
+  <meta name="description" content="Cronômetros regressivos compartilháveis entre dispositivos. Organiza vários timers em grupos, monitora numa TV, sincroniza em tempo real. Grátis pra equipes pequenas.">
+  <meta property="og:title" content="LabClock — Cronômetros multi-dispositivo">
+  <meta property="og:description" content="Cronômetros regressivos compartilháveis entre dispositivos. Pra laboratórios químicos, cozinhas profissionais, breweries e qualquer contexto multi-timing.">
+  <meta property="og:type" content="website">
 
   <link rel="icon" href="https://nicchon.com/favicon.svg" type="image/svg+xml">
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="assets/style.css">
 
   <script>
     (function () {
       try {
         var t = localStorage.getItem('app-theme');
-        if (t === 'dark' || t === 'light') {
-          document.documentElement.setAttribute('data-theme', t);
-        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
           document.documentElement.setAttribute('data-theme', 'dark');
-        }
       } catch (e) {}
     })();
   </script>
 </head>
-<body>
+<body class="landing-body">
 
-<header class="site-header">
+<header class="site-header landing-header">
   <a href="https://app.nicchon.com/" class="back-link" aria-label="Voltar para o app.nicchon.com">
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
     <span class="back-link-text">app.nicchon.com</span>
   </a>
-  <div id="user-area" class="user-area">
-    <!-- preenchido pelo main.js: login-link OU user-chip com logout -->
-  </div>
-  <button type="button" class="theme-toggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">
+  <nav class="landing-nav" id="landing-nav">
+    <a href="login.html" class="link-nav">Entrar</a>
+    <a href="criar-conta.html" class="login-link">Criar lab</a>
+  </nav>
+  <button type="button" class="theme-toggle" aria-label="Alternar tema" title="Alternar tema">
     <svg class="theme-icon theme-icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
     <svg class="theme-icon theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
   </button>
 </header>
 
-<main class="container">
-  <section class="hero">
-    <p class="font-mono-meta">app.nicchon.com / labclock</p>
-    <h1>LabClock.</h1>
+<main class="landing-main">
+
+  <section class="landing-hero">
+    <p class="font-mono-meta">labclock</p>
+    <h1>Cronômetros que conversam<br>entre dispositivos.</h1>
     <p class="lede">
-      Cronômetros regressivos compartilháveis entre dispositivos.
-      Cria, organiza em grupos, monitora de qualquer lugar.
+      Cria um cronômetro num celular, controla pelo desktop, exibe na TV da bancada.
+      Vários timers simultâneos, organizados em grupos, com alarme audível, notificação
+      no SO e display gigante pra ver de longe.
     </p>
+    <div class="landing-cta">
+      <a href="criar-conta.html" class="btn-primary btn-grande">Criar lab grátis</a>
+      <a href="login.html" class="btn-sec btn-grande">Já tenho conta</a>
+    </div>
+    <p class="landing-cta-hint">Grátis. Sem cartão. Cria conta em 30 segundos.</p>
   </section>
 
-  <section class="bloco-criar">
-    <h2 class="bloco-titulo">Criar cronômetro</h2>
-    <form id="form-criar" class="form-criar form-criar-cron">
-      <div class="field">
-        <label for="nome">Nome</label>
-        <input type="text" id="nome" name="nome" placeholder="Aquecimento sódio" maxlength="120">
-      </div>
-      <div class="field">
-        <label for="tempo">Tempo (MM:SS ou segundos)</label>
-        <input type="text" id="tempo" name="tempo" placeholder="15:00" value="01:00">
-      </div>
-      <div class="field">
-        <label for="sala">Sala (opcional)</label>
-        <select id="sala" name="sala">
-          <option value="">— sem sala —</option>
-        </select>
-      </div>
-      <button type="submit" class="btn-primary">Criar</button>
-    </form>
-  </section>
-
-  <section class="bloco-criar">
-    <h2 class="bloco-titulo">Criar grupo</h2>
-    <form id="form-criar-grupo" class="form-criar form-criar-grupo">
-      <div class="field">
-        <label for="nome-grupo">Nome do grupo</label>
-        <input type="text" id="nome-grupo" placeholder="Cron do Nicchon" maxlength="120">
-      </div>
-      <button type="submit" class="btn-primary">Criar</button>
-    </form>
-  </section>
-
-  <section class="bloco-lista">
-    <h2 class="bloco-titulo">Meus grupos</h2>
-    <div id="lista-grupos" class="grid-cronometros" aria-busy="true">
-      <p class="state-msg">Carregando…</p>
+  <section class="landing-secao">
+    <h2 class="landing-secao-titulo">Para quem é</h2>
+    <div class="landing-grid-3">
+      <article class="landing-card">
+        <h3>Laboratórios químicos</h3>
+        <p>Aquecimentos, repousos, reações paralelas em salas distintas. Cada técnico
+        pelo celular dele, dashboard centralizado na TV do laboratório.</p>
+      </article>
+      <article class="landing-card">
+        <h3>Cozinhas profissionais</h3>
+        <p>Massas, fermentações, descansos. Vários pontos de cozinha rodando
+        em paralelo, alerta sonoro audível pelo cozinheiro de cada estação.</p>
+      </article>
+      <article class="landing-card">
+        <h3>Breweries e cervejarias</h3>
+        <p>Fervura, lúpulo, fermentação. Cronômetros longos (horas/dias)
+        com URL compartilhada — ver de qualquer lugar, sem precisar estar na fábrica.</p>
+      </article>
     </div>
   </section>
 
-  <section class="bloco-lista">
-    <h2 class="bloco-titulo">Cronômetros existentes</h2>
-    <div class="filtros-sala" id="filtros-sala"><!-- chips de filtro por sala --></div>
-    <div id="lista" class="grid-cronometros" aria-busy="true">
-      <p class="state-msg">Carregando…</p>
+  <section class="landing-secao landing-secao-alt">
+    <h2 class="landing-secao-titulo">Como funciona</h2>
+    <ol class="landing-passos">
+      <li>
+        <span class="passo-num">1</span>
+        <div>
+          <h3>Cria um lab</h3>
+          <p>Conta gratuita em 30s. Você é o admin, pode adicionar técnicos depois.</p>
+        </div>
+      </li>
+      <li>
+        <span class="passo-num">2</span>
+        <div>
+          <h3>Cria cronômetros</h3>
+          <p>Nome, duração, sala. Cada um ganha uma URL curta tipo <code>/c/abc12xyz/</code>.</p>
+        </div>
+      </li>
+      <li>
+        <span class="passo-num">3</span>
+        <div>
+          <h3>Compartilha</h3>
+          <p>Manda a URL pro celular do técnico. Agrupa vários na TV do laboratório.
+          Beep + notificação no SO quando chega ao zero.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="landing-secao">
+    <h2 class="landing-secao-titulo">Por que LabClock</h2>
+    <div class="landing-grid-2">
+      <div class="landing-feature">
+        <h3>Polling determinístico</h3>
+        <p>Sem WebSocket. Cada cliente sincroniza com o servidor a cada 3s e calcula
+        o display localmente a 10fps. Funciona em rede instável, em qualquer browser.</p>
+      </div>
+      <div class="landing-feature">
+        <h3>Multi-tenant isolado</h3>
+        <p>Cada lab tem cronômetros, salas, técnicos e logs isolados. Nenhum dado
+        vaza entre labs. URL pública de cronômetro permite leitura sem revelar o lab.</p>
+      </div>
+      <div class="landing-feature">
+        <h3>TV mode com QR</h3>
+        <p>Tela cheia, números gigantes, Wake Lock pra TV não apagar. QR code pra
+        celular parear sem digitar URL.</p>
+      </div>
+      <div class="landing-feature">
+        <h3>Audit log completo</h3>
+        <p>Quem iniciou, pausou, deletou — tudo registrado com IP e timestamp.
+        Admin vê histórico filtrável por usuário, ação e período.</p>
+      </div>
     </div>
   </section>
+
+  <section class="landing-secao landing-secao-final">
+    <h2 class="landing-secao-titulo">Pronto pra começar?</h2>
+    <p class="lede">Cria seu lab grátis, sem cartão, em menos de 30 segundos.</p>
+    <div class="landing-cta">
+      <a href="criar-conta.html" class="btn-primary btn-grande">Criar lab grátis</a>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <p>
+      LabClock faz parte do <a href="https://app.nicchon.com/">app.nicchon.com</a>.
+      Construído por <a href="https://nicchon.com">nicchon</a>.
+    </p>
+  </footer>
 </main>
 
-<script src="assets/jquery-3.6.1.min.js"></script>
-<script src="assets/main.js"></script>
+<script src="assets/landing.js"></script>
 </body>
 </html>

@@ -34,12 +34,13 @@ try {
     $db = lc_db();
 
     // ---------- LISTAR ----------
-    // Aceita ?sala_id=N pra filtrar por sala. Inclui sala_nome + dono_nome via JOIN.
+    // Exige login (lista é do tenant do user). Aceita ?sala_id=N pra filtrar por sala.
     if ($method === 'GET' && $slug === null) {
-        $where = '';
-        $params = [];
+        $user = lc_require_login();
+        $where  = ' WHERE c.tenant_id = :tid';
+        $params = [':tid' => (int) $user['tenant_id']];
         if (isset($_GET['sala_id'])) {
-            $where = ' WHERE c.sala_id = :sid';
+            $where .= ' AND c.sala_id = :sid';
             $params[':sid'] = (int) $_GET['sala_id'];
         }
         $sql = "SELECT c.slug, c.nome, c.duracao_ms, c.status, c.started_at_ms, c.paused_remaining_ms,
@@ -68,21 +69,21 @@ try {
             lc_json(['error' => 'duracao_ms deve estar entre 1s e 24h'], 422);
         }
 
-        // sala_id opcional — valida se existe
+        // sala_id opcional — valida que existe e pertence ao mesmo tenant
         $sala_id = null;
         if (isset($b['sala_id']) && $b['sala_id'] !== null && $b['sala_id'] !== '') {
             $sala_id = (int) $b['sala_id'];
-            $chk = $db->prepare("SELECT id FROM labclock_salas WHERE id = :id");
-            $chk->execute([':id' => $sala_id]);
+            $chk = $db->prepare("SELECT id FROM labclock_salas WHERE id = :id AND tenant_id = :tid");
+            $chk->execute([':id' => $sala_id, ':tid' => (int) $user['tenant_id']]);
             if (!$chk->fetch()) lc_json(['error' => 'sala_id não existe'], 422);
         }
 
         // Gera slug único — tenta até 5x em caso de colisão
-        $stmt = $db->prepare("INSERT INTO labclock_cronometros (slug, dono_id, sala_id, nome, duracao_ms) VALUES (:s, :dono, :sala, :n, :d)");
+        $stmt = $db->prepare("INSERT INTO labclock_cronometros (tenant_id, slug, dono_id, sala_id, nome, duracao_ms) VALUES (:tid, :s, :dono, :sala, :n, :d)");
         for ($i = 0; $i < 5; $i++) {
             $s = lc_gerar_slug();
             try {
-                $stmt->execute([':s' => $s, ':dono' => $user['id'], ':sala' => $sala_id, ':n' => $nome, ':d' => $duracao]);
+                $stmt->execute([':tid' => (int) $user['tenant_id'], ':s' => $s, ':dono' => $user['id'], ':sala' => $sala_id, ':n' => $nome, ':d' => $duracao]);
                 $newId = (int) $db->lastInsertId();
                 lc_audit('cronometro.criar', 'cronometro', $newId, [
                     'slug' => $s, 'nome' => $nome, 'duracao_ms' => $duracao, 'sala_id' => $sala_id,
@@ -119,8 +120,8 @@ try {
     // ---------- EDITAR (nome / duracao_ms) — PATCH sem ?acao ----------
     if ($method === 'PATCH' && $slug !== null && $acao === null) {
         $user = lc_require_login();
-        $stmt = $db->prepare("SELECT * FROM labclock_cronometros WHERE slug = :s");
-        $stmt->execute([':s' => $slug]);
+        $stmt = $db->prepare("SELECT * FROM labclock_cronometros WHERE slug = :s AND tenant_id = :tid");
+        $stmt->execute([':s' => $slug, ':tid' => (int) $user['tenant_id']]);
         $c = $stmt->fetch();
         if (!$c) lc_json(['error' => 'cronômetro não encontrado'], 404);
         if ($c['dono_id'] !== null && (int) $c['dono_id'] !== (int) $user['id'] && $user['papel'] !== 'admin') {
@@ -146,8 +147,8 @@ try {
             }
         }
         if ($temSala && $novaSala !== null) {
-            $chk = $db->prepare("SELECT id FROM labclock_salas WHERE id = :id");
-            $chk->execute([':id' => $novaSala]);
+            $chk = $db->prepare("SELECT id FROM labclock_salas WHERE id = :id AND tenant_id = :tid");
+            $chk->execute([':id' => $novaSala, ':tid' => (int) $user['tenant_id']]);
             if (!$chk->fetch()) lc_json(['error' => 'sala_id não existe'], 422);
         }
 
@@ -189,12 +190,11 @@ try {
     // ---------- AÇÕES (start, pause, reset) ----------
     if ($method === 'PATCH' && $slug !== null && $acao !== null) {
         $user = lc_require_login();
-        $stmt = $db->prepare("SELECT * FROM labclock_cronometros WHERE slug = :s");
-        $stmt->execute([':s' => $slug]);
+        $stmt = $db->prepare("SELECT * FROM labclock_cronometros WHERE slug = :s AND tenant_id = :tid");
+        $stmt->execute([':s' => $slug, ':tid' => (int) $user['tenant_id']]);
         $c = $stmt->fetch();
         if (!$c) lc_json(['error' => 'cronômetro não encontrado'], 404);
-        // Ownership: dono pode tudo. Admin pode tudo. Outros: 403.
-        // (cronômetros legados sem dono_id, qualquer logado pode mexer — facilita migração)
+        // Ownership dentro do tenant: dono pode tudo. Admin do tenant pode tudo. Outros: 403.
         if ($c['dono_id'] !== null && (int) $c['dono_id'] !== (int) $user['id'] && $user['papel'] !== 'admin') {
             lc_json(['error' => 'sem permissão pra mexer neste cronômetro'], 403);
         }
@@ -240,9 +240,9 @@ try {
     // ---------- EXCLUIR ----------
     if ($method === 'DELETE' && $slug !== null) {
         $user = lc_require_login();
-        // Mesma regra de ownership do PATCH
-        $stmt = $db->prepare("SELECT id, dono_id, nome FROM labclock_cronometros WHERE slug = :s");
-        $stmt->execute([':s' => $slug]);
+        // Mesma regra de ownership do PATCH, dentro do tenant
+        $stmt = $db->prepare("SELECT id, dono_id, nome FROM labclock_cronometros WHERE slug = :s AND tenant_id = :tid");
+        $stmt->execute([':s' => $slug, ':tid' => (int) $user['tenant_id']]);
         $c = $stmt->fetch();
         if (!$c) lc_json(['error' => 'cronômetro não encontrado'], 404);
         if ($c['dono_id'] !== null && (int) $c['dono_id'] !== (int) $user['id'] && $user['papel'] !== 'admin') {

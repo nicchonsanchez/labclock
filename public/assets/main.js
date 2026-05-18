@@ -38,16 +38,19 @@ function bindUserArea() {
               '<button type="button" id="btn-logout">sair</button>' +
             '</span>'
         );
+        // Hero personalizado com o nome do tenant
+        if (u.tenant_nome) {
+            $('#hero-titulo').text(u.tenant_nome + '.');
+            $('#hero-meta').text('labclock / ' + (u.tenant_slug || 'painel'));
+        }
         $('#btn-logout').on('click', function () {
             $.ajax({ url: 'api/auth.php?acao=logout', method: 'POST' }).always(function () {
-                location.reload();
+                location.href = './';
             });
         });
     }).fail(function () {
-        var next = encodeURIComponent(location.pathname + location.search);
-        $('#user-area').html('<a href="login.html?next=' + next + '" class="login-link">Entrar</a>');
-        // Desabilita form de criar se não logado
-        $('#form-criar button[type=submit]').prop('disabled', true).text('Faça login pra criar');
+        // Não logado em app.html: manda pra landing
+        location.href = './';
     });
 }
 

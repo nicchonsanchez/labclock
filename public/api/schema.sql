@@ -67,6 +67,23 @@ CREATE TABLE IF NOT EXISTS labclock_grupo_cronometros (
 -- ALTER TABLE labclock_cronometros ADD INDEX idx_sala (sala_id);
 -- ALTER TABLE labclock_cronometros ADD CONSTRAINT fk_cron_sala FOREIGN KEY (sala_id) REFERENCES labclock_salas(id) ON DELETE SET NULL;
 
+-- ===== Fase 7: multi-tenant =====
+CREATE TABLE IF NOT EXISTS labclock_tenants (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  slug          VARCHAR(20) NOT NULL UNIQUE,
+  nome          VARCHAR(120) NOT NULL,
+  plano         VARCHAR(20) NOT NULL DEFAULT 'free',
+  status        ENUM('ativo','suspenso') NOT NULL DEFAULT 'ativo',
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Adicionado pela migração:
+-- ALTER TABLE labclock_usuarios     ADD COLUMN tenant_id INT UNSIGNED NOT NULL, ADD INDEX (tenant_id), ADD FK CASCADE
+-- ALTER TABLE labclock_cronometros  ADD COLUMN tenant_id INT UNSIGNED NOT NULL, ADD INDEX (tenant_id), ADD FK CASCADE
+-- ALTER TABLE labclock_grupos       ADD COLUMN tenant_id INT UNSIGNED NOT NULL, ADD INDEX (tenant_id), ADD FK CASCADE
+-- ALTER TABLE labclock_salas        ADD COLUMN tenant_id INT UNSIGNED NOT NULL, ADD INDEX (tenant_id), ADD FK CASCADE
+-- ALTER TABLE labclock_audit_log    ADD COLUMN tenant_id INT UNSIGNED NULL,     ADD INDEX (tenant_id), ADD FK SET NULL
+
 -- ===== Fase 6: audit log =====
 CREATE TABLE IF NOT EXISTS labclock_audit_log (
   id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

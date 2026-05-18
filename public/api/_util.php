@@ -12,6 +12,16 @@ function lc_json($data, int $code = 200): never {
     exit;
 }
 
+// Slugifica string pra slug de tenant: minúsculo, [a-z0-9], 4-20 chars.
+// Remove acentos, troca espaços por nada, trunca em 20. Útil pra auto-preencher form de signup.
+function lc_slugify(string $s): string {
+    // Remove acentos (NFD + strip combining marks)
+    $s = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', $s) ?? strtolower($s);
+    $s = preg_replace('/[^a-z0-9]/', '', $s);
+    $s = substr($s, 0, 20);
+    return $s;
+}
+
 // Slug de 8 chars sem caracteres confusos (0/O, 1/I/l). ~10^11 combinações.
 function lc_gerar_slug(): string {
     $chars = 'abcdefghjkmnpqrstuvwxyz23456789';

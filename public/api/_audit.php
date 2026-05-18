@@ -22,10 +22,11 @@ function lc_audit(string $acao, ?string $entidadeTipo = null, ?int $entidadeId =
         $u = lc_user();
         $stmt = lc_db()->prepare(
             "INSERT INTO labclock_audit_log
-                (usuario_id, usuario_email, acao, entidade_tipo, entidade_id, detalhes, ip, user_agent, created_at)
-             VALUES (:uid, :uemail, :acao, :et, :eid, :det, :ip, :ua, NOW())"
+                (tenant_id, usuario_id, usuario_email, acao, entidade_tipo, entidade_id, detalhes, ip, user_agent, created_at)
+             VALUES (:tid, :uid, :uemail, :acao, :et, :eid, :det, :ip, :ua, NOW())"
         );
         $stmt->execute([
+            ':tid'    => $u['tenant_id'] ?? null,
             ':uid'    => $u['id'] ?? null,
             ':uemail' => $u['email'] ?? null,
             ':acao'   => $acao,
@@ -55,6 +56,15 @@ function lc_audit_ip(): ?string {
 function lc_audit_listar(array $filtros = [], int $limit = 100, int $offset = 0): array {
     $where = [];
     $params = [];
+    // Filtro tenant_id é OBRIGATÓRIO (passado por auditoria.php). Permite NULL pra ver ações sem tenant
+    // (ex: signup, login.fail). Mas no fluxo normal sempre vem com tenant_id setado.
+    if (isset($filtros['tenant_id'])) {
+        $tid = (int) $filtros['tenant_id'];
+        // Inclui as ações sem tenant_id (login.fail anônimo, etc.) — admin do tenant
+        // ainda quer ver tentativas de login com email do próprio tenant.
+        $where[] = '(tenant_id = :tid OR tenant_id IS NULL)';
+        $params[':tid'] = $tid;
+    }
     if (!empty($filtros['usuario_id'])) {
         $where[] = 'usuario_id = :uid';
         $params[':uid'] = (int) $filtros['usuario_id'];
@@ -98,8 +108,14 @@ function lc_audit_listar(array $filtros = [], int $limit = 100, int $offset = 0)
     return ['entries' => $rows, 'total' => $total, 'limit' => $limit, 'offset' => $offset];
 }
 
-/** Lista de ações distintas (pra dropdown de filtro). */
-function lc_audit_acoes(): array {
-    $stmt = lc_db()->query("SELECT DISTINCT acao FROM labclock_audit_log ORDER BY acao");
+/** Lista de ações distintas no tenant (pra dropdown de filtro). */
+function lc_audit_acoes(?int $tenantId = null): array {
+    if ($tenantId !== null) {
+        $stmt = lc_db()->prepare("SELECT DISTINCT acao FROM labclock_audit_log
+            WHERE tenant_id = :tid OR tenant_id IS NULL ORDER BY acao");
+        $stmt->execute([':tid' => $tenantId]);
+    } else {
+        $stmt = lc_db()->query("SELECT DISTINCT acao FROM labclock_audit_log ORDER BY acao");
+    }
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
 }

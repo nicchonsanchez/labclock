@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grupo · LabClock</title>
+  <title>LabClock — Painel</title>
+
   <meta name="theme-color" content="#F5F0E6" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#11141C" media="(prefers-color-scheme: dark)">
+  <meta name="robots" content="noindex">
+
   <link rel="icon" href="https://nicchon.com/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
+
   <script>
     (function () {
       try {
@@ -25,43 +29,76 @@
 <body>
 
 <header class="site-header">
-  <a href="app.html" class="back-link" aria-label="Voltar pro labclock">
+  <a href="./" class="back-link" aria-label="Voltar pra landing">
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
     <span class="back-link-text">labclock</span>
   </a>
-  <button type="button" class="theme-toggle" aria-label="Alternar tema" title="Alternar tema">
+  <div id="user-area" class="user-area"></div>
+  <button type="button" class="theme-toggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">
     <svg class="theme-icon theme-icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
     <svg class="theme-icon theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
   </button>
 </header>
 
 <main class="container">
-  <section class="hero" id="grupo-header">
-    <p class="font-mono-meta" id="grupo-codigo">Carregando…</p>
-    <h1 id="grupo-nome">—</h1>
-    <p class="lede" id="grupo-info">—</p>
+  <section class="hero">
+    <p class="font-mono-meta" id="hero-meta">labclock / painel</p>
+    <h1 id="hero-titulo">LabClock.</h1>
+    <p class="lede">
+      Cronômetros regressivos compartilháveis entre dispositivos.
+      Cria, organiza em grupos, monitora de qualquer lugar.
+    </p>
+  </section>
+
+  <section class="bloco-criar">
+    <h2 class="bloco-titulo">Criar cronômetro</h2>
+    <form id="form-criar" class="form-criar form-criar-cron">
+      <div class="field">
+        <label for="nome">Nome</label>
+        <input type="text" id="nome" name="nome" placeholder="Aquecimento sódio" maxlength="120">
+      </div>
+      <div class="field">
+        <label for="tempo">Tempo (MM:SS ou segundos)</label>
+        <input type="text" id="tempo" name="tempo" placeholder="15:00" value="01:00">
+      </div>
+      <div class="field">
+        <label for="sala">Sala (opcional)</label>
+        <select id="sala" name="sala">
+          <option value="">— sem sala —</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">Criar</button>
+    </form>
+  </section>
+
+  <section class="bloco-criar">
+    <h2 class="bloco-titulo">Criar grupo</h2>
+    <form id="form-criar-grupo" class="form-criar form-criar-grupo">
+      <div class="field">
+        <label for="nome-grupo">Nome do grupo</label>
+        <input type="text" id="nome-grupo" placeholder="Cron do Nicchon" maxlength="120">
+      </div>
+      <button type="submit" class="btn-primary">Criar</button>
+    </form>
   </section>
 
   <section class="bloco-lista">
-    <div class="grupo-actions">
-      <button type="button" id="btn-add" class="btn-primary" hidden>+ Adicionar cronômetro</button>
-      <a href="#" id="btn-tv" class="btn-sec" target="_blank" rel="noopener">Modo TV ↗</a>
-      <button type="button" id="btn-copiar" class="btn-sec">Copiar link</button>
+    <h2 class="bloco-titulo">Meus grupos</h2>
+    <div id="lista-grupos" class="grid-cronometros" aria-busy="true">
+      <p class="state-msg">Carregando…</p>
     </div>
-    <div id="add-form" class="add-form" hidden>
-      <input type="text" id="slug-add" placeholder="slug do cronômetro (ex: abc12xyz)" maxlength="12">
-      <button type="button" class="btn-primary" id="btn-add-confirm">Adicionar</button>
-      <button type="button" class="btn-sec"     id="btn-add-cancel">Cancelar</button>
-      <p class="erro" id="erro-add" hidden></p>
-    </div>
-    <div id="lista-grupo" class="grid-cronometros" aria-busy="true">
-      <p class="state-msg">Carregando cronômetros…</p>
+  </section>
+
+  <section class="bloco-lista">
+    <h2 class="bloco-titulo">Cronômetros existentes</h2>
+    <div class="filtros-sala" id="filtros-sala"></div>
+    <div id="lista" class="grid-cronometros" aria-busy="true">
+      <p class="state-msg">Carregando…</p>
     </div>
   </section>
 </main>
 
 <script src="assets/jquery-3.6.1.min.js"></script>
-<script src="assets/notify.js"></script>
-<script src="assets/grupo.js"></script>
+<script src="assets/main.js"></script>
 </body>
 </html>

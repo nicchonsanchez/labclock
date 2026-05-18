@@ -8,7 +8,7 @@ $(function () {
 
     // Se já logado, redireciona pra home
     $.getJSON('api/auth.php?acao=me').done(function () {
-        var next = new URLSearchParams(location.search).get('next') || './';
+        var next = new URLSearchParams(location.search).get('next') || 'app.html';
         location.href = next;
     });
 

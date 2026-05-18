@@ -28,16 +28,19 @@ if (($me['papel'] ?? '') !== 'admin') {
 try {
     if ($method !== 'GET') lc_json(['error' => 'método não suportado'], 405);
 
-    // Endpoints auxiliares pros filtros do front
+    $tid = (int) $me['tenant_id'];
+
+    // Endpoints auxiliares pros filtros do front (todos com escopo do tenant)
     if (isset($_GET['acao_lista'])) {
-        lc_json(['acoes' => lc_audit_acoes()]);
+        lc_json(['acoes' => lc_audit_acoes($tid)]);
     }
     if (isset($_GET['usuarios'])) {
-        $stmt = lc_db()->query("SELECT id, email, nome FROM labclock_usuarios ORDER BY nome");
+        $stmt = lc_db()->prepare("SELECT id, email, nome FROM labclock_usuarios WHERE tenant_id = :tid ORDER BY nome");
+        $stmt->execute([':tid' => $tid]);
         lc_json(['usuarios' => $stmt->fetchAll()]);
     }
 
-    $filtros = [];
+    $filtros = ['tenant_id' => $tid];
     if (isset($_GET['usuario_id']) && $_GET['usuario_id'] !== '') $filtros['usuario_id'] = (int) $_GET['usuario_id'];
     if (isset($_GET['acao'])       && $_GET['acao'] !== '')       $filtros['acao']       = (string) $_GET['acao'];
     if (isset($_GET['desde'])      && $_GET['desde'] !== '')      $filtros['desde']      = (string) $_GET['desde'];

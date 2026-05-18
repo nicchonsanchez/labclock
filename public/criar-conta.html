@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Perfil · LabClock</title>
+  <title>Criar lab · LabClock</title>
   <meta name="theme-color" content="#F5F0E6" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#11141C" media="(prefers-color-scheme: dark)">
-  <meta name="robots" content="noindex">
 
   <link rel="icon" href="https://nicchon.com/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,7 +27,7 @@
 <body>
 
 <header class="site-header">
-  <a href="app.html" class="back-link" aria-label="Voltar pro labclock">
+  <a href="./" class="back-link" aria-label="Voltar pro labclock">
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
     <span class="back-link-text">labclock</span>
   </a>
@@ -39,26 +38,54 @@
 </header>
 
 <main class="container-login">
-  <article class="card-login" id="card-perfil">
-    <p class="font-mono-meta">labclock / perfil</p>
-    <h1>Perfil.</h1>
+  <article class="card-login card-signup">
+    <p class="font-mono-meta">labclock / criar conta</p>
+    <h1>Crie seu lab.</h1>
     <p class="lede">
-      Logado como <strong id="meu-nome">—</strong> (<span id="meu-email">—</span>).
+      Cada lab tem cronômetros, salas e técnicos isolados. Você será o admin
+      do lab e poderá adicionar técnicos depois. Grátis, sem limite.
     </p>
 
-    <h2 class="bloco-titulo" style="margin-top:2rem">Trocar senha</h2>
-    <form id="form-senha" class="form-login">
-      <div class="field"><label for="senha-atual">Senha atual</label><input type="password" id="senha-atual" required autocomplete="current-password"></div>
-      <div class="field"><label for="senha-nova">Senha nova (mín. 8)</label><input type="password" id="senha-nova" required minlength="8" autocomplete="new-password"></div>
-      <div class="field"><label for="senha-confirma">Confirmar senha nova</label><input type="password" id="senha-confirma" required minlength="8" autocomplete="new-password"></div>
+    <form id="form-signup" class="form-login">
+      <fieldset class="signup-fieldset">
+        <legend>Lab</legend>
+        <div class="field">
+          <label for="tenant-nome">Nome do lab</label>
+          <input type="text" id="tenant-nome" required maxlength="120" placeholder="Ex: Laboratório de Química Orgânica">
+        </div>
+        <div class="field">
+          <label for="tenant-slug">Slug do lab (URL) <span class="field-hint">— letras minúsculas e números, 4-20</span></label>
+          <input type="text" id="tenant-slug" required minlength="4" maxlength="20" pattern="[a-z0-9]+" placeholder="autopreenchido a partir do nome">
+        </div>
+      </fieldset>
+
+      <fieldset class="signup-fieldset">
+        <legend>Admin</legend>
+        <div class="field">
+          <label for="admin-nome">Seu nome</label>
+          <input type="text" id="admin-nome" required maxlength="120" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="admin-email">Seu email</label>
+          <input type="email" id="admin-email" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="admin-senha">Senha <span class="field-hint">— mínimo 8 caracteres</span></label>
+          <input type="password" id="admin-senha" required minlength="8" autocomplete="new-password">
+        </div>
+      </fieldset>
+
       <p class="erro" id="erro" hidden></p>
-      <p class="ok" id="ok" hidden>Senha trocada com sucesso.</p>
-      <button type="submit" class="btn-primary" id="btn-submit">Trocar</button>
+      <button type="submit" class="btn-primary" id="btn-submit">Criar lab e entrar</button>
     </form>
+
+    <p class="login-footer">
+      Já tem conta? <a href="login.html">Entrar →</a>
+    </p>
   </article>
 </main>
 
 <script src="assets/jquery-3.6.1.min.js"></script>
-<script src="assets/perfil.js"></script>
+<script src="assets/criar-conta.js"></script>
 </body>
 </html>

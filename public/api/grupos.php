@@ -70,7 +70,7 @@ try {
         ]);
     }
 
-    // ---------- LISTAR (logado) — meus grupos + grupos onde tenho cronômetro ----------
+    // ---------- LISTAR (logado) — meus grupos + grupos onde tenho cronômetro (escopo: tenant) ----------
     if ($method === 'GET' && $slug === null) {
         $me = lc_require_login();
         $stmt = $db->prepare("
@@ -78,14 +78,15 @@ try {
                    (SELECT COUNT(*) FROM labclock_grupo_cronometros gc WHERE gc.grupo_id = g.id) AS total_cronometros
               FROM labclock_grupos g
               JOIN labclock_usuarios u ON u.id = g.dono_id
-             WHERE g.dono_id = :me
-                OR g.id IN (
-                    SELECT gc.grupo_id FROM labclock_grupo_cronometros gc
-                    JOIN labclock_cronometros c ON c.id = gc.cronometro_id
-                    WHERE c.dono_id = :me2
-                )
+             WHERE g.tenant_id = :tid
+               AND (g.dono_id = :me
+                    OR g.id IN (
+                        SELECT gc.grupo_id FROM labclock_grupo_cronometros gc
+                        JOIN labclock_cronometros c ON c.id = gc.cronometro_id
+                        WHERE c.dono_id = :me2
+                    ))
              ORDER BY g.created_at DESC");
-        $stmt->execute([':me' => $me['id'], ':me2' => $me['id']]);
+        $stmt->execute([':tid' => (int) $me['tenant_id'], ':me' => $me['id'], ':me2' => $me['id']]);
         lc_json(['grupos' => $stmt->fetchAll(), 'server_time_ms' => $now]);
     }
 
@@ -96,11 +97,11 @@ try {
         $nome = trim((string) ($b['nome'] ?? ''));
         if ($nome === '' || mb_strlen($nome) > 120) lc_json(['error' => 'nome obrigatório (até 120 chars)'], 422);
 
-        $ins = $db->prepare("INSERT INTO labclock_grupos (slug, dono_id, nome) VALUES (:s, :d, :n)");
+        $ins = $db->prepare("INSERT INTO labclock_grupos (tenant_id, slug, dono_id, nome) VALUES (:tid, :s, :d, :n)");
         for ($i = 0; $i < 5; $i++) {
             $s = lc_gerar_slug();
             try {
-                $ins->execute([':s' => $s, ':d' => $me['id'], ':n' => $nome]);
+                $ins->execute([':tid' => (int) $me['tenant_id'], ':s' => $s, ':d' => $me['id'], ':n' => $nome]);
                 $newId = (int) $db->lastInsertId();
                 lc_audit('grupo.criar', 'grupo', $newId, ['slug' => $s, 'nome' => $nome]);
                 lc_json(['ok' => true, 'slug' => $s, 'nome' => $nome, 'dono_id' => (int) $me['id']], 201);
@@ -111,11 +112,11 @@ try {
         lc_json(['error' => 'falha ao gerar slug único'], 500);
     }
 
-    // Operações que precisam do grupo + ownership check
+    // Operações que precisam do grupo + ownership check (escopo: tenant)
     if (in_array($method, ['PATCH', 'DELETE', 'POST'], true) && $slug !== null) {
         $me = lc_require_login();
-        $stmt = $db->prepare("SELECT id, dono_id FROM labclock_grupos WHERE slug = :s");
-        $stmt->execute([':s' => $slug]);
+        $stmt = $db->prepare("SELECT id, dono_id FROM labclock_grupos WHERE slug = :s AND tenant_id = :tid");
+        $stmt->execute([':s' => $slug, ':tid' => (int) $me['tenant_id']]);
         $g = $stmt->fetch();
         if (!$g) lc_json(['error' => 'grupo não encontrado'], 404);
         if ((int) $g['dono_id'] !== (int) $me['id'] && $me['papel'] !== 'admin') {
@@ -148,8 +149,9 @@ try {
             $cronSlug = trim((string) ($b['cronometro_slug'] ?? ''));
             if (!preg_match('/^[a-z0-9]{4,12}$/', $cronSlug)) lc_json(['error' => 'cronometro_slug inválido'], 422);
 
-            $cs = $db->prepare("SELECT id FROM labclock_cronometros WHERE slug = :s");
-            $cs->execute([':s' => $cronSlug]);
+            // Cronômetro adicionado tem que ser do mesmo tenant do grupo
+            $cs = $db->prepare("SELECT id FROM labclock_cronometros WHERE slug = :s AND tenant_id = :tid");
+            $cs->execute([':s' => $cronSlug, ':tid' => (int) $me['tenant_id']]);
             $c = $cs->fetch();
             if (!$c) lc_json(['error' => 'cronômetro não encontrado'], 404);
 
