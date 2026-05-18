@@ -105,7 +105,10 @@ function renderLista() {
             url: API_GRUPO + '?slug=' + encodeURIComponent(estado.grupo.slug) + '&acao=remove&cronometro_slug=' + encodeURIComponent(s),
             method: 'DELETE',
         }).done(function () { carregarGrupo(estado.grupo.slug); })
-          .fail(function (xhr) { alert((xhr.responseJSON && xhr.responseJSON.error) || 'erro'); });
+          .fail(function (xhr) {
+              if (xhr.status === 401) { alert('Sessão expirou. Logue novamente.'); location.href = '../login.html'; return; }
+              alert('Falha (HTTP ' + (xhr.status || '0') + '): ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro de conexão'));
+          });
     });
 }
 
@@ -183,7 +186,9 @@ function bindAddCronometro(slug) {
             $('#erro-add').hide();
             carregarGrupo(slug);
         }).fail(function (xhr) {
-            $('#erro-add').text((xhr.responseJSON && xhr.responseJSON.error) || 'erro').show();
+            if (xhr.status === 401) { $('#erro-add').text('Sessão expirou — logue novamente').show(); return; }
+            var m = (xhr.responseJSON && xhr.responseJSON.error) || 'erro (HTTP ' + (xhr.status || '0') + ')';
+            $('#erro-add').text(m).show();
         });
     }
 }

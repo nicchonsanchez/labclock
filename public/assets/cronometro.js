@@ -155,8 +155,13 @@ function bindBotoes(slug) {
             // Recarrega imediatamente pra refletir mudança (sem esperar 3s do polling)
             carregarEstado(slug);
         }).fail(function (xhr) {
-            var msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'erro';
-            alert('Falha: ' + msg);
+            if (xhr.status === 401) {
+                alert('Sua sessão expirou. Faça login pra controlar este cronômetro.');
+                location.href = '../login.html';
+                return;
+            }
+            var msg = (xhr.responseJSON && xhr.responseJSON.error) || (xhr.responseText ? xhr.responseText.substring(0, 140) : 'erro de conexão');
+            alert('Falha (HTTP ' + (xhr.status || '0') + '):\n\n' + msg);
         });
     });
 }
@@ -223,7 +228,12 @@ function bindEdicaoInline(slug) {
                 $bloco.find('.btn-editar').show();
                 if (estado.cronometro) estado.cronometro.nome = novo;
             }).fail(function (xhr) {
-                alert('Falha: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro'));
+                if (xhr.status === 401) {
+                    alert('Sua sessão expirou. Faça login pra editar.');
+                    location.href = '../login.html';
+                    return;
+                }
+                alert('Falha (HTTP ' + (xhr.status || '0') + '): ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro de conexão'));
                 cancelar();
             });
         }
@@ -265,7 +275,12 @@ function bindEdicaoInline(slug) {
                 $bloco.find('.cronometro-display, .btn-editar').show();
                 carregarEstado(slug); // recarrega — duracao mudou + status virou PARADO
             }).fail(function (xhr) {
-                alert('Falha: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro'));
+                if (xhr.status === 401) {
+                    alert('Sua sessão expirou. Faça login pra editar.');
+                    location.href = '../login.html';
+                    return;
+                }
+                alert('Falha (HTTP ' + (xhr.status || '0') + '): ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro de conexão'));
                 cancelar();
             });
         }

@@ -164,11 +164,14 @@ function calcularRemaining(c, serverMs) {
 function bindFormCriar() {
     $('#form-criar').on('submit', function (e) {
         e.preventDefault();
+        var $btn = $(this).find('button[type=submit]').prop('disabled', true).text('Criando…');
+        var voltar = function () { $btn.prop('disabled', false).text('Criar'); };
         var nome = $('#nome').val().trim() || 'Cronômetro';
         var tempoStr = $('#tempo').val().trim() || '60';
         var duracao_ms = parsearTempoMs(tempoStr);
         var sala = $('#sala').val();
-        if (duracao_ms < 1000) { alert('Tempo mínimo: 1 segundo'); return; }
+        if (duracao_ms < 1000) { alert('Tempo inválido. Use formato MM:SS (ex: 15:00) ou segundos (ex: 90). Mínimo: 1 segundo.'); voltar(); return; }
+        if (duracao_ms > 86400000) { alert('Tempo máximo: 24 horas.'); voltar(); return; }
         var body = { nome: nome, duracao_ms: duracao_ms };
         if (sala) body.sala_id = parseInt(sala, 10);
         $.ajax({
@@ -177,9 +180,15 @@ function bindFormCriar() {
             contentType: 'application/json',
             data: JSON.stringify(body),
         }).done(function (resp) {
+            if (!resp || !resp.slug) {
+                alert('Resposta inesperada do servidor — cronômetro pode não ter sido criado.');
+                voltar();
+                return;
+            }
             location.href = 'c/' + resp.slug + '/';
         }).fail(function (xhr) {
-            alert('Erro ao criar: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro'));
+            voltar();
+            handleFailDetalhado(xhr, 'criar cronômetro');
         });
     });
 }
@@ -187,19 +196,41 @@ function bindFormCriar() {
 function bindFormCriarGrupo() {
     $('#form-criar-grupo').on('submit', function (e) {
         e.preventDefault();
+        var $btn = $(this).find('button[type=submit]').prop('disabled', true).text('Criando…');
+        var voltar = function () { $btn.prop('disabled', false).text('Criar'); };
         var nome = $('#nome-grupo').val().trim();
-        if (!nome) { alert('Nome obrigatório'); return; }
+        if (!nome) { alert('Nome do grupo obrigatório.'); voltar(); return; }
         $.ajax({
             url: 'api/grupos.php',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ nome: nome }),
         }).done(function (resp) {
+            if (!resp || !resp.slug) {
+                alert('Resposta inesperada do servidor — grupo pode não ter sido criado.');
+                voltar();
+                return;
+            }
             location.href = 'g/' + resp.slug + '/';
         }).fail(function (xhr) {
-            alert('Erro ao criar grupo: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro'));
+            voltar();
+            handleFailDetalhado(xhr, 'criar grupo');
         });
     });
+}
+
+// Mensagem de erro detalhada — diferencia 401 (sessão), 422 (validação), 5xx (servidor)
+function handleFailDetalhado(xhr, acao) {
+    if (xhr.status === 401) {
+        alert('Sua sessão expirou. Você será redirecionado pro login.');
+        location.href = 'login.html';
+        return;
+    }
+    var msg = (xhr.responseJSON && xhr.responseJSON.error)
+        || (xhr.responseText ? xhr.responseText.substring(0, 140) : '')
+        || 'erro de conexão';
+    var detalhe = xhr.status ? ' (HTTP ' + xhr.status + ')' : ' (sem resposta do servidor)';
+    alert('Falha ao ' + acao + detalhe + ':\n\n' + msg);
 }
 
 
