@@ -372,10 +372,97 @@ img { display: block; max-width: 100%; height: auto; }
 }
 
 
+/* Login ================================================ */
+.container-login {
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+}
+.card-login {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 2.5rem 2rem;
+}
+.card-login h1 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 2.5rem;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0.75rem 0 1.25rem;
+}
+.card-login .lede {
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+.form-login .field { margin-bottom: 1.25rem; }
+.form-login .erro {
+  background: rgba(92, 31, 31, 0.10);
+  border: 1px solid var(--color-bordo);
+  color: var(--color-bordo);
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+.form-login button { width: 100%; }
+
+/* Header user-chip — mostra "logado como X" + logout */
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.875rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+.user-chip .user-nome { color: var(--color-text); font-weight: 500; }
+.user-chip button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-dim);
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  padding: 0;
+  transition: color 0.15s;
+}
+.user-chip button:hover { color: var(--color-bordo); }
+
+.login-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.875rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-bordo);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-bordo);
+  transition: background 0.15s, color 0.15s;
+}
+.login-link:hover { background: var(--color-bordo); color: var(--color-bg); }
+
+
 /* Responsivo =========================================== */
 @media (max-width: 640px) {
   .site-header { padding: 1rem; }
   .container, .container-cronometro { padding: 1rem 1.25rem 4rem; }
+  .container-login { padding: 1.5rem 1.25rem 4rem; }
+  .card-login { padding: 2rem 1.5rem; }
   .form-criar { grid-template-columns: 1fr; }
   .cronometro-card { padding: 2rem 1.25rem; }
 }

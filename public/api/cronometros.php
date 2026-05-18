@@ -16,6 +16,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/_db.php';
 require_once __DIR__ . '/_util.php';
+require_once __DIR__ . '/_auth.php';
 
 header('X-Content-Type-Options: nosniff');
 
@@ -40,6 +41,7 @@ try {
 
     // ---------- CRIAR ----------
     if ($method === 'POST' && $slug === null) {
+        $user = lc_require_login();
         $b = lc_input();
         $nome = trim((string) ($b['nome'] ?? ''));
         if ($nome === '') $nome = 'Cronômetro';
@@ -51,16 +53,17 @@ try {
         }
 
         // Gera slug único — tenta até 5x em caso de colisão
-        $stmt = $db->prepare("INSERT INTO labclock_cronometros (slug, nome, duracao_ms) VALUES (:s, :n, :d)");
+        $stmt = $db->prepare("INSERT INTO labclock_cronometros (slug, dono_id, nome, duracao_ms) VALUES (:s, :dono, :n, :d)");
         for ($i = 0; $i < 5; $i++) {
             $s = lc_gerar_slug();
             try {
-                $stmt->execute([':s' => $s, ':n' => $nome, ':d' => $duracao]);
+                $stmt->execute([':s' => $s, ':dono' => $user['id'], ':n' => $nome, ':d' => $duracao]);
                 lc_json([
                     'slug'           => $s,
                     'nome'           => $nome,
                     'duracao_ms'     => $duracao,
                     'status'         => 'PARADO',
+                    'dono_id'        => (int) $user['id'],
                     'server_time_ms' => $now,
                 ], 201);
             } catch (PDOException $e) {
@@ -81,10 +84,16 @@ try {
 
     // ---------- AÇÕES (start, pause, reset) ----------
     if ($method === 'PATCH' && $slug !== null && $acao !== null) {
+        $user = lc_require_login();
         $stmt = $db->prepare("SELECT * FROM labclock_cronometros WHERE slug = :s");
         $stmt->execute([':s' => $slug]);
         $c = $stmt->fetch();
         if (!$c) lc_json(['error' => 'cronômetro não encontrado'], 404);
+        // Ownership: dono pode tudo. Admin pode tudo. Outros: 403.
+        // (cronômetros legados sem dono_id, qualquer logado pode mexer — facilita migração)
+        if ($c['dono_id'] !== null && (int) $c['dono_id'] !== (int) $user['id'] && $user['papel'] !== 'admin') {
+            lc_json(['error' => 'sem permissão pra mexer neste cronômetro'], 403);
+        }
 
         if ($acao === 'start') {
             // Se pausado: retoma de onde parou (started_at = now - elapsed)
@@ -123,9 +132,18 @@ try {
 
     // ---------- EXCLUIR ----------
     if ($method === 'DELETE' && $slug !== null) {
-        $u = $db->prepare("DELETE FROM labclock_cronometros WHERE slug = :s");
-        $u->execute([':s' => $slug]);
-        lc_json(['ok' => true, 'affected' => $u->rowCount(), 'server_time_ms' => $now]);
+        $user = lc_require_login();
+        // Mesma regra de ownership do PATCH
+        $stmt = $db->prepare("SELECT dono_id FROM labclock_cronometros WHERE slug = :s");
+        $stmt->execute([':s' => $slug]);
+        $c = $stmt->fetch();
+        if (!$c) lc_json(['error' => 'cronômetro não encontrado'], 404);
+        if ($c['dono_id'] !== null && (int) $c['dono_id'] !== (int) $user['id'] && $user['papel'] !== 'admin') {
+            lc_json(['error' => 'sem permissão pra excluir'], 403);
+        }
+        $del = $db->prepare("DELETE FROM labclock_cronometros WHERE slug = :s");
+        $del->execute([':s' => $slug]);
+        lc_json(['ok' => true, 'affected' => $del->rowCount(), 'server_time_ms' => $now]);
     }
 
     lc_json(['error' => 'método/rota não suportado'], 405);

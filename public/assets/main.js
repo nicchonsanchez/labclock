@@ -9,9 +9,35 @@ var POLL_MS = 3000;
 $(function () {
     bindThemeToggle();
     bindFormCriar();
+    bindUserArea();
     carregarLista();
     setInterval(carregarLista, POLL_MS);
 });
+
+/*
+    HEADER user-area: mostra "logado como X" ou link de login
+*/
+function bindUserArea() {
+    $.getJSON('api/auth.php?acao=me').done(function (resp) {
+        var u = resp.user;
+        $('#user-area').html(
+            '<span class="user-chip">' +
+              '<span>como <span class="user-nome">' + esc(u.nome) + '</span></span>' +
+              '<button type="button" id="btn-logout">sair</button>' +
+            '</span>'
+        );
+        $('#btn-logout').on('click', function () {
+            $.ajax({ url: 'api/auth.php?acao=logout', method: 'POST' }).always(function () {
+                location.reload();
+            });
+        });
+    }).fail(function () {
+        var next = encodeURIComponent(location.pathname + location.search);
+        $('#user-area').html('<a href="login.html?next=' + next + '" class="login-link">Entrar</a>');
+        // Desabilita form de criar se não logado
+        $('#form-criar button[type=submit]').prop('disabled', true).text('Faça login pra criar');
+    });
+}
 
 
 /*
