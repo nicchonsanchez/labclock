@@ -1,0 +1,187 @@
+/* =========================================================
+   LabClock TV mode — full-screen, números gigantes
+   ========================================================= */
+
+.tv-body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.tv-root {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  padding: 1.5rem 2rem;
+  gap: 1rem;
+}
+
+/* Header — nome do grupo + relógio */
+.tv-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+.tv-meta-sep { color: var(--color-border-muted); }
+#tv-nome { color: var(--color-text); font-weight: 600; }
+#tv-relogio {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  margin-left: auto;
+}
+
+/* Grid de cronômetros — auto-ajusta colunas baseado em quantos */
+.tv-grid {
+  display: grid;
+  gap: 1.5rem;
+  align-content: center;
+  justify-items: stretch;
+  min-height: 0;
+}
+.tv-grid.cols-1 { grid-template-columns: 1fr; }
+.tv-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.tv-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.tv-grid.cols-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+.tv-grid.cols-many { grid-template-columns: repeat(3, 1fr); }
+
+.tv-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--color-text-dim);
+  font-size: 1.125rem;
+  padding: 3rem;
+}
+
+/* Card de cronômetro em TV mode — sem decoração, foco no número */
+.tv-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  min-height: 0;
+  transition: border-color 0.3s, background 0.3s;
+}
+.tv-card.rodando  { border-color: var(--color-running); }
+.tv-card.atrasado { border-color: var(--color-bordo); background: rgba(196, 96, 78, 0.08); }
+.tv-card.terminado { animation: tv-flash 0.6s ease-in-out 4; }
+@keyframes tv-flash {
+  0%, 100% { background: var(--color-surface); }
+  50%      { background: var(--color-bordo); }
+}
+
+.tv-card-nome {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+.tv-card-sala {
+  font-family: var(--font-mono);
+  font-size: clamp(0.6875rem, 1.2vw, 0.875rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  margin-bottom: 1.5rem;
+}
+.tv-card-tempo {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: clamp(4rem, 11vw, 9rem);
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  transition: color 0.3s;
+}
+.tv-card.rodando .tv-card-tempo  { color: var(--color-running); }
+.tv-card.atrasado .tv-card-tempo { color: var(--color-bordo); }
+.tv-card-status {
+  font-family: var(--font-mono);
+  font-size: clamp(0.625rem, 1vw, 0.75rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  margin-top: 0.5rem;
+}
+
+/* Footer — QR + URL pra pareamento celular */
+.tv-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+}
+.tv-footer-left { flex: 1; }
+.tv-footer-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  margin: 0 0 0.25rem;
+}
+.tv-footer-url {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--color-text);
+  margin: 0;
+  word-break: break-all;
+}
+.tv-qr {
+  background: #fff;
+  padding: 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  line-height: 0;
+}
+.tv-qr canvas, .tv-qr img { display: block; }
+
+/* Botão fullscreen — fica no canto superior direito */
+.tv-fullscreen-btn {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  font-size: 1.125rem;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.2s, color 0.2s;
+}
+.tv-fullscreen-btn:hover { opacity: 1; color: var(--color-bordo); }
+.tv-root:fullscreen .tv-fullscreen-btn,
+:fullscreen .tv-fullscreen-btn { display: none; }
+
+/* Responsivo */
+@media (max-width: 800px) {
+  .tv-grid.cols-2, .tv-grid.cols-3, .tv-grid.cols-4, .tv-grid.cols-many {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  .tv-root { padding: 1rem; }
+  .tv-footer { flex-direction: column; align-items: stretch; text-align: center; }
+  .tv-qr { align-self: center; }
+}

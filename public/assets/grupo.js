@@ -55,6 +55,7 @@ function carregarGrupo(slug) {
         $('#grupo-codigo').text('Grupo · ' + g.slug);
         $('#grupo-nome').text(g.nome);
         $('#grupo-info').text('Dono: ' + g.dono_nome + ' · ' + g.cronometros.length + ' cronômetro' + (g.cronometros.length === 1 ? '' : 's'));
+        $('#btn-tv').attr('href', '../tv/' + slug + '/');
         renderLista();
         atualizarPermissoes();
     }).fail(function (xhr) {

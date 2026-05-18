@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TV · LabClock</title>
+  <meta name="theme-color" content="#11141C">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="https://nicchon.com/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;600&family=Inter:wght@500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/tv.css">
+
+  <script>
+    // TV mode é sempre escuro por padrão (melhor pra visualização em salas baixa-luz)
+    document.documentElement.setAttribute('data-theme', 'dark');
+  </script>
+</head>
+<body class="tv-body">
+
+<main id="tv-root" class="tv-root">
+  <header class="tv-meta">
+    <span id="tv-nome">Carregando…</span>
+    <span class="tv-meta-sep">·</span>
+    <span id="tv-relogio">--:--</span>
+  </header>
+
+  <section id="tv-grid" class="tv-grid" aria-busy="true">
+    <p class="tv-state">Carregando cronômetros do grupo…</p>
+  </section>
+
+  <footer class="tv-footer">
+    <div class="tv-footer-left">
+      <p class="tv-footer-label">Acompanhe no celular</p>
+      <p class="tv-footer-url" id="tv-url-mobile">—</p>
+    </div>
+    <div class="tv-qr" id="tv-qr"></div>
+  </footer>
+
+  <button type="button" id="tv-fullscreen" class="tv-fullscreen-btn" title="Tela cheia" aria-label="Entrar em tela cheia">⛶</button>
+</main>
+
+<script src="assets/jquery-3.6.1.min.js"></script>
+<script src="assets/qrcode.min.js"></script>
+<script src="assets/tv.js"></script>
+</body>
+</html>

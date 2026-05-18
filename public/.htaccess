@@ -32,8 +32,9 @@ RedirectMatch 403 /tarefas-md
 # ============================================================
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteRule ^c/([a-z0-9]{4,12})/?$ cronometro.html?slug=$1 [L,QSA]
-  RewriteRule ^g/([a-z0-9]{4,12})/?$ grupo.html?slug=$1      [L,QSA]
+  RewriteRule ^c/([a-z0-9]{4,12})/?$  cronometro.html?slug=$1 [L,QSA]
+  RewriteRule ^g/([a-z0-9]{4,12})/?$  grupo.html?slug=$1      [L,QSA]
+  RewriteRule ^tv/([a-z0-9]{4,12})/?$ tv.html?slug=$1         [L,QSA]
 </IfModule>
 
 DirectoryIndex index.html
