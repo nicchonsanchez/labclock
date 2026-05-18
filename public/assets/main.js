@@ -6,12 +6,18 @@
 var API = 'api/cronometros.php';
 var POLL_MS = 3000;
 
+var salasCache = [];
+var filtroSalaId = null;  // null = todas
+
 $(function () {
     bindThemeToggle();
     bindFormCriar();
+    bindFormCriarGrupo();
     bindUserArea();
+    carregarSalas();
     carregarLista();
-    setInterval(carregarLista, POLL_MS);
+    carregarGrupos();
+    setInterval(function () { carregarLista(); carregarGrupos(); }, POLL_MS);
 });
 
 /*
@@ -50,12 +56,39 @@ function bindUserArea() {
     LISTA
 */
 
+function carregarSalas() {
+    $.getJSON('api/salas.php').done(function (resp) {
+        salasCache = resp.salas || [];
+        // dropdown no form de criar cronômetro
+        var $sel = $('#sala').empty().append('<option value="">— sem sala —</option>');
+        salasCache.forEach(function (s) {
+            $sel.append('<option value="' + s.id + '">' + esc(s.nome) + '</option>');
+        });
+        // chips de filtro
+        var $chips = $('#filtros-sala').empty();
+        var todasClass = filtroSalaId === null ? ' ativo' : '';
+        $chips.append('<button class="chip-sala' + todasClass + '" data-sala="">Todas</button>');
+        salasCache.forEach(function (s) {
+            var cls = filtroSalaId === s.id ? ' ativo' : '';
+            $chips.append('<button class="chip-sala' + cls + '" data-sala="' + s.id + '">' + esc(s.nome) + '</button>');
+        });
+        $('.chip-sala').on('click', function () {
+            var v = $(this).data('sala');
+            filtroSalaId = v === '' || v === undefined ? null : parseInt(v, 10);
+            $('.chip-sala').removeClass('ativo');
+            $(this).addClass('ativo');
+            carregarLista();
+        });
+    });
+}
+
 function carregarLista() {
-    $.getJSON(API).done(function (resp) {
+    var url = API + (filtroSalaId !== null ? '?sala_id=' + filtroSalaId : '');
+    $.getJSON(url).done(function (resp) {
         var $list = $('#lista');
         $list.removeAttr('aria-busy');
         if (!resp.cronometros || resp.cronometros.length === 0) {
-            $list.html('<p class="state-msg">Nenhum cronômetro ainda. Crie o primeiro acima.</p>');
+            $list.html('<p class="state-msg">Nenhum cronômetro' + (filtroSalaId !== null ? ' nesta sala' : '') + '.</p>');
             return;
         }
         var server_ms = resp.server_time_ms;
@@ -65,6 +98,31 @@ function carregarLista() {
         $list.html(html);
     }).fail(function () {
         $('#lista').html('<p class="state-msg">Erro ao carregar — tentando novamente em alguns segundos.</p>');
+    });
+}
+
+function carregarGrupos() {
+    $.getJSON('api/grupos.php').done(function (resp) {
+        var $list = $('#lista-grupos').removeAttr('aria-busy');
+        if (!resp.grupos || resp.grupos.length === 0) {
+            $list.html('<p class="state-msg">Você ainda não tem grupos. Crie um acima.</p>');
+            return;
+        }
+        var html = resp.grupos.map(function (g) {
+            return (
+                '<a href="g/' + esc(g.slug) + '/" class="cronometro-item grupo-card">' +
+                  '<p class="codigo">' + esc(g.slug) + '</p>' +
+                  '<h3 class="titulo">' + esc(g.nome) + '</h3>' +
+                  '<p class="tempo grupo-stats">' + g.total_cronometros + ' cronômetro' + (g.total_cronometros === 1 ? '' : 's') + '</p>' +
+                '</a>'
+            );
+        }).join('');
+        $list.html(html);
+    }).fail(function (xhr) {
+        // Usuário não logado retorna 401 — esconde a seção
+        if (xhr.status === 401) {
+            $('#lista-grupos').closest('section').hide();
+        }
     });
 }
 
@@ -106,21 +164,37 @@ function bindFormCriar() {
         var nome = $('#nome').val().trim() || 'Cronômetro';
         var tempoStr = $('#tempo').val().trim() || '60';
         var duracao_ms = parsearTempoMs(tempoStr);
-        if (duracao_ms < 1000) {
-            alert('Tempo mínimo: 1 segundo');
-            return;
-        }
+        var sala = $('#sala').val();
+        if (duracao_ms < 1000) { alert('Tempo mínimo: 1 segundo'); return; }
+        var body = { nome: nome, duracao_ms: duracao_ms };
+        if (sala) body.sala_id = parseInt(sala, 10);
         $.ajax({
             url: API,
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ nome: nome, duracao_ms: duracao_ms }),
+            data: JSON.stringify(body),
         }).done(function (resp) {
-            // Redireciona pra página individual do cronômetro criado
             location.href = 'c/' + resp.slug + '/';
         }).fail(function (xhr) {
-            var msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'erro desconhecido';
-            alert('Erro ao criar: ' + msg);
+            alert('Erro ao criar: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro'));
+        });
+    });
+}
+
+function bindFormCriarGrupo() {
+    $('#form-criar-grupo').on('submit', function (e) {
+        e.preventDefault();
+        var nome = $('#nome-grupo').val().trim();
+        if (!nome) { alert('Nome obrigatório'); return; }
+        $.ajax({
+            url: 'api/grupos.php',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ nome: nome }),
+        }).done(function (resp) {
+            location.href = 'g/' + resp.slug + '/';
+        }).fail(function (xhr) {
+            alert('Erro ao criar grupo: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro'));
         });
     });
 }

@@ -55,13 +55,13 @@
     <h1>LabClock.</h1>
     <p class="lede">
       Cronômetros regressivos compartilháveis entre dispositivos.
-      Cria, abre por URL, monitora de qualquer lugar.
+      Cria, organiza em grupos, monitora de qualquer lugar.
     </p>
   </section>
 
   <section class="bloco-criar">
-    <h2 class="bloco-titulo">Criar novo</h2>
-    <form id="form-criar" class="form-criar">
+    <h2 class="bloco-titulo">Criar cronômetro</h2>
+    <form id="form-criar" class="form-criar form-criar-cron">
       <div class="field">
         <label for="nome">Nome</label>
         <input type="text" id="nome" name="nome" placeholder="Aquecimento sódio" maxlength="120">
@@ -70,12 +70,37 @@
         <label for="tempo">Tempo (MM:SS ou segundos)</label>
         <input type="text" id="tempo" name="tempo" placeholder="15:00" value="01:00">
       </div>
-      <button type="submit" class="btn-primary">Criar cronômetro</button>
+      <div class="field">
+        <label for="sala">Sala (opcional)</label>
+        <select id="sala" name="sala">
+          <option value="">— sem sala —</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">Criar</button>
+    </form>
+  </section>
+
+  <section class="bloco-criar">
+    <h2 class="bloco-titulo">Criar grupo</h2>
+    <form id="form-criar-grupo" class="form-criar form-criar-grupo">
+      <div class="field">
+        <label for="nome-grupo">Nome do grupo</label>
+        <input type="text" id="nome-grupo" placeholder="Cron do Nicchon" maxlength="120">
+      </div>
+      <button type="submit" class="btn-primary">Criar</button>
     </form>
   </section>
 
   <section class="bloco-lista">
+    <h2 class="bloco-titulo">Meus grupos</h2>
+    <div id="lista-grupos" class="grid-cronometros" aria-busy="true">
+      <p class="state-msg">Carregando…</p>
+    </div>
+  </section>
+
+  <section class="bloco-lista">
     <h2 class="bloco-titulo">Cronômetros existentes</h2>
+    <div class="filtros-sala" id="filtros-sala"><!-- chips de filtro por sala --></div>
     <div id="lista" class="grid-cronometros" aria-busy="true">
       <p class="state-msg">Carregando…</p>
     </div>

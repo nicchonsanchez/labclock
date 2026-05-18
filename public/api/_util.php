@@ -45,5 +45,9 @@ function lc_cron_to_array(array $c): array {
         'status'              => $c['status'],
         'started_at_ms'       => $c['started_at_ms'] !== null ? (int) $c['started_at_ms'] : null,
         'paused_remaining_ms' => $c['paused_remaining_ms'] !== null ? (int) $c['paused_remaining_ms'] : null,
+        'sala_id'             => array_key_exists('sala_id', $c) && $c['sala_id'] !== null ? (int) $c['sala_id'] : null,
+        'sala_nome'           => $c['sala_nome'] ?? null,
+        'dono_id'             => array_key_exists('dono_id', $c) && $c['dono_id'] !== null ? (int) $c['dono_id'] : null,
+        'dono_nome'           => $c['dono_nome'] ?? null,
     ];
 }

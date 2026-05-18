@@ -31,8 +31,38 @@ CREATE TABLE IF NOT EXISTS labclock_cronometros (
   CONSTRAINT fk_cron_dono FOREIGN KEY (dono_id) REFERENCES labclock_usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Migração idempotente: adiciona dono_id em tabelas pré-fase-2 que ainda não tenham a coluna.
--- (Roda manualmente se a CREATE TABLE acima for ignorada por já existir)
--- ALTER TABLE labclock_cronometros ADD COLUMN dono_id INT UNSIGNED NULL AFTER slug;
--- ALTER TABLE labclock_cronometros ADD INDEX idx_dono (dono_id);
--- ALTER TABLE labclock_cronometros ADD CONSTRAINT fk_cron_dono FOREIGN KEY (dono_id) REFERENCES labclock_usuarios(id) ON DELETE SET NULL;
+-- ===== Fase 4: salas + grupos =====
+CREATE TABLE IF NOT EXISTS labclock_salas (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nome          VARCHAR(80) NOT NULL,
+  ordem         INT NOT NULL DEFAULT 0,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_ordem (ordem)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS labclock_grupos (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  slug          VARCHAR(12) NOT NULL UNIQUE,
+  dono_id       INT UNSIGNED NOT NULL,
+  nome          VARCHAR(120) NOT NULL,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_dono (dono_id),
+  CONSTRAINT fk_grupo_dono FOREIGN KEY (dono_id) REFERENCES labclock_usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS labclock_grupo_cronometros (
+  grupo_id        INT UNSIGNED NOT NULL,
+  cronometro_id   INT UNSIGNED NOT NULL,
+  ordem           INT NOT NULL DEFAULT 0,
+  added_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (grupo_id, cronometro_id),
+  INDEX idx_cron (cronometro_id),
+  CONSTRAINT fk_gc_grupo FOREIGN KEY (grupo_id)      REFERENCES labclock_grupos(id)      ON DELETE CASCADE,
+  CONSTRAINT fk_gc_cron  FOREIGN KEY (cronometro_id) REFERENCES labclock_cronometros(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ALTER pra adicionar sala_id em cronometros (fase 4):
+-- ALTER TABLE labclock_cronometros ADD COLUMN sala_id INT UNSIGNED NULL AFTER dono_id;
+-- ALTER TABLE labclock_cronometros ADD INDEX idx_sala (sala_id);
+-- ALTER TABLE labclock_cronometros ADD CONSTRAINT fk_cron_sala FOREIGN KEY (sala_id) REFERENCES labclock_salas(id) ON DELETE SET NULL;

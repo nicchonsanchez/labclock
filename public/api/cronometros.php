@@ -33,8 +33,23 @@ try {
     $db = lc_db();
 
     // ---------- LISTAR ----------
+    // Aceita ?sala_id=N pra filtrar por sala. Inclui sala_nome + dono_nome via JOIN.
     if ($method === 'GET' && $slug === null) {
-        $stmt = $db->query("SELECT slug, nome, duracao_ms, status, started_at_ms, paused_remaining_ms FROM labclock_cronometros ORDER BY updated_at DESC LIMIT 100");
+        $where = '';
+        $params = [];
+        if (isset($_GET['sala_id'])) {
+            $where = ' WHERE c.sala_id = :sid';
+            $params[':sid'] = (int) $_GET['sala_id'];
+        }
+        $sql = "SELECT c.slug, c.nome, c.duracao_ms, c.status, c.started_at_ms, c.paused_remaining_ms,
+                       c.sala_id, c.dono_id, s.nome AS sala_nome, u.nome AS dono_nome
+                  FROM labclock_cronometros c
+                  LEFT JOIN labclock_salas    s ON s.id = c.sala_id
+                  LEFT JOIN labclock_usuarios u ON u.id = c.dono_id
+                  $where
+                  ORDER BY c.updated_at DESC LIMIT 100";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
         $rows = array_map('lc_cron_to_array', $stmt->fetchAll());
         lc_json(['server_time_ms' => $now, 'cronometros' => $rows]);
     }
@@ -52,18 +67,28 @@ try {
             lc_json(['error' => 'duracao_ms deve estar entre 1s e 24h'], 422);
         }
 
+        // sala_id opcional — valida se existe
+        $sala_id = null;
+        if (isset($b['sala_id']) && $b['sala_id'] !== null && $b['sala_id'] !== '') {
+            $sala_id = (int) $b['sala_id'];
+            $chk = $db->prepare("SELECT id FROM labclock_salas WHERE id = :id");
+            $chk->execute([':id' => $sala_id]);
+            if (!$chk->fetch()) lc_json(['error' => 'sala_id não existe'], 422);
+        }
+
         // Gera slug único — tenta até 5x em caso de colisão
-        $stmt = $db->prepare("INSERT INTO labclock_cronometros (slug, dono_id, nome, duracao_ms) VALUES (:s, :dono, :n, :d)");
+        $stmt = $db->prepare("INSERT INTO labclock_cronometros (slug, dono_id, sala_id, nome, duracao_ms) VALUES (:s, :dono, :sala, :n, :d)");
         for ($i = 0; $i < 5; $i++) {
             $s = lc_gerar_slug();
             try {
-                $stmt->execute([':s' => $s, ':dono' => $user['id'], ':n' => $nome, ':d' => $duracao]);
+                $stmt->execute([':s' => $s, ':dono' => $user['id'], ':sala' => $sala_id, ':n' => $nome, ':d' => $duracao]);
                 lc_json([
                     'slug'           => $s,
                     'nome'           => $nome,
                     'duracao_ms'     => $duracao,
                     'status'         => 'PARADO',
                     'dono_id'        => (int) $user['id'],
+                    'sala_id'        => $sala_id,
                     'server_time_ms' => $now,
                 ], 201);
             } catch (PDOException $e) {
@@ -75,7 +100,11 @@ try {
 
     // ---------- DETALHE ----------
     if ($method === 'GET' && $slug !== null) {
-        $stmt = $db->prepare("SELECT * FROM labclock_cronometros WHERE slug = :s");
+        $stmt = $db->prepare("SELECT c.*, s.nome AS sala_nome, u.nome AS dono_nome
+            FROM labclock_cronometros c
+            LEFT JOIN labclock_salas    s ON s.id = c.sala_id
+            LEFT JOIN labclock_usuarios u ON u.id = c.dono_id
+            WHERE c.slug = :s");
         $stmt->execute([':s' => $slug]);
         $c = $stmt->fetch();
         if (!$c) lc_json(['error' => 'cronômetro não encontrado'], 404);
@@ -96,9 +125,11 @@ try {
         $b = lc_input();
         $novoNome    = isset($b['nome'])       ? trim((string) $b['nome'])  : null;
         $novaDuracao = isset($b['duracao_ms']) ? (int) $b['duracao_ms']      : null;
+        $temSala     = array_key_exists('sala_id', $b);  // permite enviar null pra desassociar
+        $novaSala    = $temSala ? ($b['sala_id'] !== null && $b['sala_id'] !== '' ? (int) $b['sala_id'] : null) : null;
 
-        if ($novoNome === null && $novaDuracao === null) {
-            lc_json(['error' => 'nada pra editar (envie nome ou duracao_ms)'], 422);
+        if ($novoNome === null && $novaDuracao === null && !$temSala) {
+            lc_json(['error' => 'nada pra editar (envie nome, duracao_ms ou sala_id)'], 422);
         }
         if ($novoNome !== null) {
             if ($novoNome === '') lc_json(['error' => 'nome vazio'], 422);
@@ -108,6 +139,11 @@ try {
             if ($novaDuracao < 1000 || $novaDuracao > 86_400_000) {
                 lc_json(['error' => 'duracao_ms deve estar entre 1s e 24h'], 422);
             }
+        }
+        if ($temSala && $novaSala !== null) {
+            $chk = $db->prepare("SELECT id FROM labclock_salas WHERE id = :id");
+            $chk->execute([':id' => $novaSala]);
+            if (!$chk->fetch()) lc_json(['error' => 'sala_id não existe'], 422);
         }
 
         // Constrói UPDATE dinâmico. Se duração mudou, força reset (status PARADO).
@@ -124,9 +160,12 @@ try {
             $sets[] = "paused_remaining_ms = NULL";
             $params[':dur'] = $novaDuracao;
         }
+        if ($temSala) {
+            $sets[] = "sala_id = :sala";
+            $params[':sala'] = $novaSala;
+        }
 
         if (empty($sets)) {
-            // Sem mudança real (duracao igual à atual + nome igual). Idempotente, OK.
             lc_json(['ok' => true, 'noop' => true]);
         }
 

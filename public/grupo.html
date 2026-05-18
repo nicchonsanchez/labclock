@@ -3,17 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin · LabClock</title>
+  <title>Grupo · LabClock</title>
   <meta name="theme-color" content="#F5F0E6" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#11141C" media="(prefers-color-scheme: dark)">
-  <meta name="robots" content="noindex">
-
   <link rel="icon" href="https://nicchon.com/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
-
   <script>
     (function () {
       try {
@@ -39,58 +36,30 @@
 </header>
 
 <main class="container">
-  <section class="hero">
-    <p class="font-mono-meta">labclock / admin</p>
-    <h1>Gerenciar usuários.</h1>
-    <p class="lede">Lista de técnicos e admins do LabClock. Só admins têm acesso a esta página.</p>
-  </section>
-
-  <section class="bloco-criar">
-    <h2 class="bloco-titulo">Adicionar técnico</h2>
-    <form id="form-novo-user" class="form-criar form-novo-user">
-      <div class="field"><label for="email">Email</label><input type="email" id="email" name="email" required autocomplete="off"></div>
-      <div class="field"><label for="nome">Nome</label><input type="text" id="nome" name="nome" required maxlength="120"></div>
-      <div class="field"><label for="senha">Senha (mín. 8)</label><input type="password" id="senha" name="senha" required minlength="8" autocomplete="new-password"></div>
-      <div class="field">
-        <label for="papel">Papel</label>
-        <select id="papel" name="papel">
-          <option value="tecnico" selected>Técnico</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <button type="submit" class="btn-primary">Cadastrar</button>
-    </form>
-    <p class="erro" id="erro-novo" hidden></p>
+  <section class="hero" id="grupo-header">
+    <p class="font-mono-meta" id="grupo-codigo">Carregando…</p>
+    <h1 id="grupo-nome">—</h1>
+    <p class="lede" id="grupo-info">—</p>
   </section>
 
   <section class="bloco-lista">
-    <h2 class="bloco-titulo">Usuários cadastrados</h2>
-    <div id="tabela-usuarios" aria-busy="true">
-      <p class="state-msg">Carregando…</p>
+    <div class="grupo-actions">
+      <button type="button" id="btn-add" class="btn-primary" hidden>+ Adicionar cronômetro</button>
+      <button type="button" id="btn-copiar" class="btn-sec">Copiar link</button>
     </div>
-  </section>
-
-  <hr>
-
-  <section class="bloco-criar">
-    <h2 class="bloco-titulo">Adicionar sala</h2>
-    <form id="form-nova-sala" class="form-criar form-nova-sala">
-      <div class="field"><label for="sala-nome">Nome da sala</label><input type="text" id="sala-nome" required maxlength="80" placeholder="Sala 1 — Aquecimento"></div>
-      <div class="field"><label for="sala-ordem">Ordem</label><input type="number" id="sala-ordem" value="0" step="10"></div>
-      <button type="submit" class="btn-primary">Cadastrar</button>
-    </form>
-    <p class="erro" id="erro-sala" hidden></p>
-  </section>
-
-  <section class="bloco-lista">
-    <h2 class="bloco-titulo">Salas cadastradas</h2>
-    <div id="lista-salas" aria-busy="true">
-      <p class="state-msg">Carregando…</p>
+    <div id="add-form" class="add-form" hidden>
+      <input type="text" id="slug-add" placeholder="slug do cronômetro (ex: abc12xyz)" maxlength="12">
+      <button type="button" class="btn-primary" id="btn-add-confirm">Adicionar</button>
+      <button type="button" class="btn-sec"     id="btn-add-cancel">Cancelar</button>
+      <p class="erro" id="erro-add" hidden></p>
+    </div>
+    <div id="lista-grupo" class="grid-cronometros" aria-busy="true">
+      <p class="state-msg">Carregando cronômetros…</p>
     </div>
   </section>
 </main>
 
 <script src="assets/jquery-3.6.1.min.js"></script>
-<script src="assets/admin.js"></script>
+<script src="assets/grupo.js"></script>
 </body>
 </html>

@@ -540,6 +540,170 @@ img { display: block; max-width: 100%; height: auto; }
 .form-novo-user { grid-template-columns: 1fr 1fr 1fr auto auto; }
 @media (max-width: 800px) { .form-novo-user { grid-template-columns: 1fr; } }
 
+/* Form criar cronômetro c/ sala */
+.form-criar-cron { grid-template-columns: 1.5fr 1fr 1fr auto; }
+@media (max-width: 800px) { .form-criar-cron { grid-template-columns: 1fr; } }
+
+.form-criar-grupo { grid-template-columns: 1fr auto; }
+@media (max-width: 800px) { .form-criar-grupo { grid-template-columns: 1fr; } }
+
+.field select {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  width: 100%;
+}
+.field select:focus {
+  outline: none;
+  border-color: var(--color-bordo);
+  box-shadow: 0 0 0 3px rgba(92, 31, 31, 0.15);
+}
+
+/* Chips de filtro por sala */
+.filtros-sala {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.chip-sala {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: 999px;
+  padding: 0.3rem 0.875rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chip-sala:hover { border-color: var(--color-bordo-soft); color: var(--color-text); }
+.chip-sala.ativo {
+  background: var(--color-bordo);
+  border-color: var(--color-bordo);
+  color: var(--color-bg);
+}
+
+/* Card de grupo (na lista de grupos) */
+.grupo-card .tempo.grupo-stats {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0;
+}
+
+/* Página individual de grupo — cards menores em grid */
+.grupo-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.add-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.add-form input[type="text"] {
+  font: inherit;
+  font-family: var(--font-mono);
+  flex: 1;
+  min-width: 12rem;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.875rem;
+}
+.add-form input[type="text"]:focus {
+  outline: none;
+  border-color: var(--color-bordo);
+  box-shadow: 0 0 0 3px rgba(92, 31, 31, 0.15);
+}
+.add-form .erro { flex-basis: 100%; margin: 0.25rem 0 0; }
+
+.cronometro-item-grupo {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+.cronometro-item-grupo.rodando { border-color: var(--color-running); }
+.cronometro-item-grupo.atrasado { border-color: var(--color-bordo); }
+.cronometro-item-grupo.atrasado .cron-display { color: var(--color-bordo); }
+.cronometro-item-grupo.rodando:not(.atrasado) .cron-display { color: var(--color-running); }
+.cron-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.cron-titulo {
+  text-decoration: none;
+  flex: 1;
+  min-width: 0;
+}
+.cron-titulo h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.125rem;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+  margin: 0 0 0.125rem;
+}
+.cron-sala {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+.cron-display {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 2.25rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  margin: 0.25rem 0 0.5rem;
+}
+.cron-status {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  margin: 0;
+}
+.btn-remover-grupo {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.btn-remover-grupo:hover {
+  border-color: var(--color-bordo);
+  color: var(--color-bordo);
+  background: var(--color-surface-2);
+}
+
 .ok {
   background: rgba(31, 111, 58, 0.10);
   border: 1px solid var(--color-running);

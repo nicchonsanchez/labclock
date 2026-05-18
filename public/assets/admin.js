@@ -7,6 +7,7 @@ $(function () {
     bindThemeToggle();
     verificarAcesso();
     bindFormNovo();
+    bindFormSala();
 });
 
 function verificarAcesso() {
@@ -17,8 +18,61 @@ function verificarAcesso() {
             return;
         }
         carregarUsuarios();
+        carregarSalas();
     }).fail(function () {
         location.href = 'login.html?next=' + encodeURIComponent(location.pathname);
+    });
+}
+
+function carregarSalas() {
+    $.getJSON('api/salas.php').done(function (resp) {
+        var $tb = $('#lista-salas').removeAttr('aria-busy');
+        if (!resp.salas || resp.salas.length === 0) {
+            $tb.html('<p class="state-msg">Nenhuma sala cadastrada.</p>');
+            return;
+        }
+        var rows = resp.salas.map(function (s) {
+            return (
+                '<tr>' +
+                  '<td><strong>' + esc(s.nome) + '</strong></td>' +
+                  '<td class="muted">ordem ' + s.ordem + '</td>' +
+                  '<td><button type="button" class="btn-sec btn-sm btn-remover-sala" data-id="' + s.id + '" data-nome="' + esc(s.nome) + '">Remover</button></td>' +
+                '</tr>'
+            );
+        }).join('');
+        $tb.html('<table class="tabela-users"><thead><tr><th>Sala</th><th>Ordem</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>');
+
+        $('.btn-remover-sala').on('click', function () {
+            var id = $(this).data('id');
+            var nome = $(this).data('nome');
+            if (!confirm('Remover ' + nome + '? Cronômetros nesta sala ficarão sem sala.')) return;
+            $.ajax({ url: 'api/salas.php?id=' + id, method: 'DELETE' })
+                .done(carregarSalas)
+                .fail(function (xhr) { alert((xhr.responseJSON && xhr.responseJSON.error) || 'erro'); });
+        });
+    });
+}
+
+function bindFormSala() {
+    $('#form-nova-sala').on('submit', function (e) {
+        e.preventDefault();
+        var $err = $('#erro-sala').hide();
+        var body = {
+            nome:  $('#sala-nome').val().trim(),
+            ordem: parseInt($('#sala-ordem').val(), 10) || 0,
+        };
+        $.ajax({
+            url: 'api/salas.php',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(body),
+        }).done(function () {
+            $('#form-nova-sala')[0].reset();
+            $('#sala-ordem').val(0);
+            carregarSalas();
+        }).fail(function (xhr) {
+            $err.text((xhr.responseJSON && xhr.responseJSON.error) || 'erro').show();
+        });
     });
 }
 
