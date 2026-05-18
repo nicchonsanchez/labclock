@@ -1,0 +1,16 @@
+# Configs com secrets injetadas no deploy
+public/api/_config.php
+
+# Editors/OS
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
+*.swp
+*.bak
+
+# Logs
+*.log
+
+# Temp
+tmp/

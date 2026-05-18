@@ -1,0 +1,39 @@
+# LabClock — segurança e roteamento
+
+# ============================================================
+# Headers de segurança
+# ============================================================
+<IfModule mod_headers.c>
+  Header set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  # CSP: script-src 'self' (sem CDN externo — jQuery self-hosted)
+  Header set Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https:; script-src 'self'; connect-src 'self';"
+</IfModule>
+
+# ============================================================
+# Bloqueio de arquivos sensíveis
+# ============================================================
+<FilesMatch "\.(env|sql|log|bak|template|md|tar\.gz)$">
+  Require all denied
+</FilesMatch>
+
+<FilesMatch "^(_config|_db|_util)\.php$">
+  Require all denied
+</FilesMatch>
+
+RedirectMatch 403 /\.git
+RedirectMatch 403 /tarefas-md
+
+# ============================================================
+# Roteamento amigável
+# /c/abc12xyz/      → cronometro.html?slug=abc12xyz
+# ============================================================
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^c/([a-z0-9]{4,12})/?$ cronometro.html?slug=$1 [L,QSA]
+</IfModule>
+
+DirectoryIndex index.html
+Options -Indexes

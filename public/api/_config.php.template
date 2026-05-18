@@ -1,0 +1,12 @@
+<?php
+// Gerado em deploy via GitHub Actions a partir do template.
+// NUNCA commitar versão preenchida.
+
+return [
+    'db' => [
+        'host' => '__DB_HOST__',
+        'name' => '__DB_NAME__',
+        'user' => '__DB_USER__',
+        'pass' => '__DB_PASS__',
+    ],
+];

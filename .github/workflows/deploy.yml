@@ -1,0 +1,55 @@
+name: Deploy LabClock
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-labclock
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inject secrets into _config.php
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: |
+          set -euo pipefail
+          python3 <<'EOF'
+          import os
+          src = 'public/api/_config.php.template'
+          dst = 'public/api/_config.php'
+          keys = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS']
+          missing = [k for k in keys if not os.environ.get(k)]
+          if missing: raise SystemExit(f"Faltam secrets: {missing}")
+          with open(src) as f: content = f.read()
+          for k in keys: content = content.replace(f'__{k}__', os.environ[k])
+          with open(dst, 'w') as f: f.write(content)
+          os.remove(src)
+          print(f"OK: {dst}")
+          EOF
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./public/
+          server-dir: /app.nicchon.com/labclock/
+          exclude: |
+            **/.git*
+            **/*.template
+            **/tarefas-md/**
+            **/.github/**
