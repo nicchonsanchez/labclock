@@ -426,6 +426,7 @@ img { display: block; max-width: 100%; height: auto; }
   color: var(--color-text-dim);
 }
 .user-chip .user-nome { color: var(--color-text); font-weight: 500; }
+.user-chip .user-sep  { color: var(--color-border-muted); }
 .user-chip button {
   background: transparent;
   border: none;
@@ -439,6 +440,115 @@ img { display: block; max-width: 100%; height: auto; }
   transition: color 0.15s;
 }
 .user-chip button:hover { color: var(--color-bordo); }
+.user-chip .link-nav {
+  color: var(--color-text-dim);
+  transition: color 0.15s;
+}
+.user-chip .link-nav:hover { color: var(--color-bordo); }
+
+/* Edição inline (cronômetro individual) ================ */
+.editavel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.editavel .btn-editar {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  border-radius: 6px;
+  padding: 0.25rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.editavel .btn-editar:hover {
+  color: var(--color-bordo);
+  border-color: var(--color-bordo);
+  background: var(--color-surface);
+}
+.editavel input[type="text"] {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-bordo);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(92, 31, 31, 0.12);
+  max-width: 100%;
+}
+[data-theme="dark"] .editavel input[type="text"] {
+  box-shadow: 0 0 0 3px rgba(196, 96, 78, 0.18);
+}
+.editavel input[type="text"].input-tempo {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  font-size: clamp(2rem, 8vw, 4rem);
+}
+
+/* Tabela de usuários (admin) =========================== */
+.tabela-users {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.tabela-users th, .tabela-users td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+.tabela-users th {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  font-weight: 500;
+  border-bottom-width: 1.5px;
+  border-bottom-color: var(--color-border-muted);
+}
+.tabela-users tbody tr:hover { background: var(--color-surface-2); }
+.tabela-users .muted { color: var(--color-text-dim); font-size: 0.8125rem; }
+.tabela-users .dim   { color: var(--color-border-muted); }
+.tabela-users .tag {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.tabela-users .tag-admin {
+  color: var(--color-bordo);
+  border-color: var(--color-bordo);
+  background: var(--color-surface);
+}
+.tabela-users .tag-tecnico {
+  color: var(--color-text-dim);
+  border-color: var(--color-border-muted);
+}
+
+.btn-sm { padding: 0.4rem 0.875rem; font-size: 0.8125rem; }
+
+.form-novo-user { grid-template-columns: 1fr 1fr 1fr auto auto; }
+@media (max-width: 800px) { .form-novo-user { grid-template-columns: 1fr; } }
+
+.ok {
+  background: rgba(31, 111, 58, 0.10);
+  border: 1px solid var(--color-running);
+  color: var(--color-running);
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
 
 .login-link {
   display: inline-flex;

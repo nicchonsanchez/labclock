@@ -45,9 +45,19 @@
 <main class="container-cronometro">
   <article id="cronometro" class="cronometro-card" aria-busy="true">
     <p class="font-mono-meta" id="cronometro-status">Carregando…</p>
-    <h1 class="cronometro-nome" id="cronometro-nome">—</h1>
+    <div class="editavel" id="bloco-nome">
+      <h1 class="cronometro-nome" id="cronometro-nome">—</h1>
+      <button type="button" class="btn-editar" id="btn-editar-nome" aria-label="Editar nome" title="Editar nome" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>
+    </div>
     <p class="cronometro-codigo" id="cronometro-codigo">—</p>
-    <div class="cronometro-display" id="cronometro-display">--:--</div>
+    <div class="editavel" id="bloco-display">
+      <div class="cronometro-display" id="cronometro-display">--:--</div>
+      <button type="button" class="btn-editar" id="btn-editar-tempo" aria-label="Editar tempo" title="Editar tempo" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>
+    </div>
     <div class="cronometro-botoes">
       <button type="button" class="btn-primary" data-acao="start" disabled>Iniciar</button>
       <button type="button" class="btn-sec"     data-acao="pause" disabled>Pausar</button>

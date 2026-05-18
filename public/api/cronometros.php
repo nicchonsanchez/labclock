@@ -82,6 +82,60 @@ try {
         lc_json(array_merge(lc_cron_to_array($c), ['server_time_ms' => $now]));
     }
 
+    // ---------- EDITAR (nome / duracao_ms) — PATCH sem ?acao ----------
+    if ($method === 'PATCH' && $slug !== null && $acao === null) {
+        $user = lc_require_login();
+        $stmt = $db->prepare("SELECT * FROM labclock_cronometros WHERE slug = :s");
+        $stmt->execute([':s' => $slug]);
+        $c = $stmt->fetch();
+        if (!$c) lc_json(['error' => 'cronômetro não encontrado'], 404);
+        if ($c['dono_id'] !== null && (int) $c['dono_id'] !== (int) $user['id'] && $user['papel'] !== 'admin') {
+            lc_json(['error' => 'sem permissão pra editar'], 403);
+        }
+
+        $b = lc_input();
+        $novoNome    = isset($b['nome'])       ? trim((string) $b['nome'])  : null;
+        $novaDuracao = isset($b['duracao_ms']) ? (int) $b['duracao_ms']      : null;
+
+        if ($novoNome === null && $novaDuracao === null) {
+            lc_json(['error' => 'nada pra editar (envie nome ou duracao_ms)'], 422);
+        }
+        if ($novoNome !== null) {
+            if ($novoNome === '') lc_json(['error' => 'nome vazio'], 422);
+            if (mb_strlen($novoNome) > 120) lc_json(['error' => 'nome muito longo'], 422);
+        }
+        if ($novaDuracao !== null) {
+            if ($novaDuracao < 1000 || $novaDuracao > 86_400_000) {
+                lc_json(['error' => 'duracao_ms deve estar entre 1s e 24h'], 422);
+            }
+        }
+
+        // Constrói UPDATE dinâmico. Se duração mudou, força reset (status PARADO).
+        $sets = [];
+        $params = [':slug' => $slug];
+        if ($novoNome !== null) {
+            $sets[] = "nome = :nome";
+            $params[':nome'] = $novoNome;
+        }
+        if ($novaDuracao !== null && $novaDuracao !== (int) $c['duracao_ms']) {
+            $sets[] = "duracao_ms = :dur";
+            $sets[] = "status = 'PARADO'";
+            $sets[] = "started_at_ms = NULL";
+            $sets[] = "paused_remaining_ms = NULL";
+            $params[':dur'] = $novaDuracao;
+        }
+
+        if (empty($sets)) {
+            // Sem mudança real (duracao igual à atual + nome igual). Idempotente, OK.
+            lc_json(['ok' => true, 'noop' => true]);
+        }
+
+        $sql = "UPDATE labclock_cronometros SET " . implode(', ', $sets) . " WHERE slug = :slug";
+        $u = $db->prepare($sql);
+        $u->execute($params);
+        lc_json(['ok' => true, 'server_time_ms' => $now]);
+    }
+
     // ---------- AÇÕES (start, pause, reset) ----------
     if ($method === 'PATCH' && $slug !== null && $acao !== null) {
         $user = lc_require_login();

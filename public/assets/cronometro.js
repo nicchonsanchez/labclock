@@ -16,6 +16,8 @@ var estado = {
     cronometro: null,       // último estado vindo do servidor
     serverOffsetMs: 0,      // diferença entre clock local e servidor
     jaBeepou: false,        // flag pra disparar beep uma vez quando cruza 0
+    user: null,             // user logado (ou null se anônimo)
+    podeEditar: false,      // dono ou admin
 };
 
 $(function () {
@@ -27,10 +29,37 @@ $(function () {
     bindThemeToggle();
     bindBotoes(slug);
     bindCompartilhar(slug);
+    bindEdicaoInline(slug);
     carregarEstado(slug);
+    carregarUser();
     setInterval(function () { carregarEstado(slug); }, POLL_MS);
     setInterval(atualizarDisplay, Math.floor(1000 / DISPLAY_FPS));
 });
+
+function carregarUser() {
+    $.getJSON('../api/auth.php?acao=me').done(function (resp) {
+        estado.user = resp.user;
+        atualizarPermissoes();
+    });
+}
+
+function atualizarPermissoes() {
+    var c = estado.cronometro;
+    var u = estado.user;
+    if (!c || !u) {
+        estado.podeEditar = false;
+    } else {
+        // Dono ou admin pode mexer. Cronos sem dono_id (legado) qualquer logado pode.
+        estado.podeEditar = (c.dono_id === null || c.dono_id === undefined)
+            || (c.dono_id === u.id)
+            || (u.papel === 'admin');
+    }
+    if (estado.podeEditar) {
+        $('#btn-editar-nome, #btn-editar-tempo').prop('hidden', false);
+    } else {
+        $('#btn-editar-nome, #btn-editar-tempo').prop('hidden', true);
+    }
+}
 
 // Suporta tanto /c/abc12xyz/ (rewrite) quanto /cronometro.html?slug=abc12xyz
 function obterSlugDaURL() {
@@ -55,6 +84,7 @@ function carregarEstado(slug) {
         $('#cronometro-status').text(rotuloStatus(c.status));
         atualizarClasses(c.status);
         atualizarBotoes(c.status);
+        atualizarPermissoes();
         // Reset do beep só quando status volta pra PARADO ou for resetado
         if (c.status === 'PARADO') estado.jaBeepou = false;
     }).fail(function (xhr) {
@@ -149,6 +179,108 @@ function rotuloStatus(s) {
     if (s === 'RODANDO') return 'Rodando';
     if (s === 'PAUSADO') return 'Pausado';
     return 'Parado';
+}
+
+
+/*
+    EDIÇÃO INLINE — nome e tempo
+    Clica no lápis, vira input, Enter salva, Esc cancela.
+*/
+
+function bindEdicaoInline(slug) {
+    // ----- Nome -----
+    $('#btn-editar-nome').on('click', function () {
+        if (!estado.podeEditar) return;
+        var $bloco = $('#bloco-nome');
+        var nomeAtual = $('#cronometro-nome').text();
+        $bloco.find('.cronometro-nome, .btn-editar').hide();
+        var $inp = $('<input type="text" maxlength="120" class="input-nome">').val(nomeAtual);
+        $bloco.append($inp);
+        $inp.focus().select();
+
+        function salvar() {
+            var novo = $inp.val().trim();
+            if (novo === '' || novo === nomeAtual) { cancelar(); return; }
+            $.ajax({
+                url: API + '?slug=' + encodeURIComponent(slug),
+                method: 'PATCH',
+                contentType: 'application/json',
+                data: JSON.stringify({ nome: novo }),
+            }).done(function () {
+                $inp.remove();
+                $bloco.find('.cronometro-nome').text(novo).show();
+                $bloco.find('.btn-editar').show();
+                if (estado.cronometro) estado.cronometro.nome = novo;
+            }).fail(function (xhr) {
+                alert('Falha: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro'));
+                cancelar();
+            });
+        }
+        function cancelar() {
+            $inp.remove();
+            $bloco.find('.cronometro-nome, .btn-editar').show();
+        }
+        $inp.on('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); salvar(); }
+            else if (e.key === 'Escape') cancelar();
+        });
+        $inp.on('blur', salvar);
+    });
+
+    // ----- Tempo -----
+    $('#btn-editar-tempo').on('click', function () {
+        if (!estado.podeEditar) return;
+        var c = estado.cronometro;
+        if (!c) return;
+        var $bloco = $('#bloco-display');
+        var tempoAtual = formatar(c.duracao_ms);
+        $bloco.find('.cronometro-display, .btn-editar').hide();
+        var $inp = $('<input type="text" class="input-tempo">').val(tempoAtual);
+        $bloco.append($inp);
+        $inp.focus().select();
+
+        function salvar() {
+            var valor = $inp.val().trim();
+            var novoMs = parsearTempoMs(valor);
+            if (novoMs < 1000) { cancelar(); return; }
+            if (novoMs === c.duracao_ms) { cancelar(); return; }
+            $.ajax({
+                url: API + '?slug=' + encodeURIComponent(slug),
+                method: 'PATCH',
+                contentType: 'application/json',
+                data: JSON.stringify({ duracao_ms: novoMs }),
+            }).done(function () {
+                $inp.remove();
+                $bloco.find('.cronometro-display, .btn-editar').show();
+                carregarEstado(slug); // recarrega — duracao mudou + status virou PARADO
+            }).fail(function (xhr) {
+                alert('Falha: ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro'));
+                cancelar();
+            });
+        }
+        function cancelar() {
+            $inp.remove();
+            $bloco.find('.cronometro-display, .btn-editar').show();
+        }
+        $inp.on('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); salvar(); }
+            else if (e.key === 'Escape') cancelar();
+        });
+        $inp.on('blur', salvar);
+    });
+}
+
+// Aceita "5", "5:00", "1:30:00" — devolve milissegundos (mesma fn do main.js)
+function parsearTempoMs(texto) {
+    texto = texto.trim();
+    if (texto.indexOf(':') !== -1) {
+        var partes = texto.split(':').map(function (p) { return parseInt(p, 10) || 0; });
+        if (partes.length === 3) return (partes[0] * 3600 + partes[1] * 60 + partes[2]) * 1000;
+        if (partes.length === 2) return (partes[0] * 60 + partes[1]) * 1000;
+        return 0;
+    }
+    var n = parseInt(texto, 10);
+    return isNaN(n) ? 0 : n * 1000;
 }
 
 

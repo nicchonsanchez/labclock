@@ -20,9 +20,15 @@ $(function () {
 function bindUserArea() {
     $.getJSON('api/auth.php?acao=me').done(function (resp) {
         var u = resp.user;
+        var adminLink = u.papel === 'admin'
+            ? '<a href="admin.html" class="link-nav" title="Gerenciar usuários">admin</a>'
+            : '';
         $('#user-area').html(
             '<span class="user-chip">' +
-              '<span>como <span class="user-nome">' + esc(u.nome) + '</span></span>' +
+              adminLink +
+              '<a href="perfil.html" class="link-nav">perfil</a>' +
+              '<span class="user-sep">·</span>' +
+              '<span class="user-nome">' + esc(u.nome) + '</span>' +
               '<button type="button" id="btn-logout">sair</button>' +
             '</span>'
         );
