@@ -30,6 +30,7 @@ $(function () {
     bindBotoes(slug);
     bindCompartilhar(slug);
     bindEdicaoInline(slug);
+    if (window.lcNotify) lcNotify.init();
     carregarEstado(slug);
     carregarUser();
     setInterval(function () { carregarEstado(slug); }, POLL_MS);
@@ -106,10 +107,18 @@ function atualizarDisplay() {
     var remaining = calcularRemaining(c, serverNow);
     $('#cronometro-display').text(formatar(remaining));
 
-    // Beep quando cruza 0 (rodando)
+    // Beep + notificação no SO quando cruza 0 (rodando)
     if (c.status === 'RODANDO' && remaining <= 0 && !estado.jaBeepou) {
         estado.jaBeepou = true;
         avisarFim();
+        if (window.lcNotify) {
+            lcNotify.disparar({
+                titulo: 'Cronômetro terminou',
+                body:   (c.nome || 'Cronômetro') + ' chegou ao zero.',
+                slug:   c.slug,
+                url:    '/labclock/c/' + c.slug + '/',
+            });
+        }
     }
     // Mostra "atrasado" quando rodando em negativo
     if (c.status === 'RODANDO' && remaining < 0) {
@@ -137,6 +146,8 @@ function calcularRemaining(c, serverNow) {
 function bindBotoes(slug) {
     $('[data-acao]').on('click', function () {
         var acao = $(this).data('acao');
+        // Pede permissão de notificação na primeira vez que o user aperta start.
+        if (acao === 'start' && window.lcNotify) lcNotify.pedirPermissao();
         $.ajax({
             url: API + '?slug=' + encodeURIComponent(slug) + '&acao=' + encodeURIComponent(acao),
             method: 'PATCH',

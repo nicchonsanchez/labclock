@@ -17,6 +17,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/_db.php';
 require_once __DIR__ . '/_util.php';
 require_once __DIR__ . '/_auth.php';
+require_once __DIR__ . '/_audit.php';
 
 header('X-Content-Type-Options: nosniff');
 
@@ -82,6 +83,10 @@ try {
             $s = lc_gerar_slug();
             try {
                 $stmt->execute([':s' => $s, ':dono' => $user['id'], ':sala' => $sala_id, ':n' => $nome, ':d' => $duracao]);
+                $newId = (int) $db->lastInsertId();
+                lc_audit('cronometro.criar', 'cronometro', $newId, [
+                    'slug' => $s, 'nome' => $nome, 'duracao_ms' => $duracao, 'sala_id' => $sala_id,
+                ]);
                 lc_json([
                     'slug'           => $s,
                     'nome'           => $nome,
@@ -172,6 +177,12 @@ try {
         $sql = "UPDATE labclock_cronometros SET " . implode(', ', $sets) . " WHERE slug = :slug";
         $u = $db->prepare($sql);
         $u->execute($params);
+        lc_audit('cronometro.editar', 'cronometro', (int) $c['id'], [
+            'slug' => $slug,
+            'nome_novo' => $novoNome,
+            'duracao_ms_nova' => $novaDuracao,
+            'sala_id_nova' => $temSala ? $novaSala : null,
+        ]);
         lc_json(['ok' => true, 'server_time_ms' => $now]);
     }
 
@@ -199,6 +210,7 @@ try {
             }
             $u = $db->prepare("UPDATE labclock_cronometros SET status='RODANDO', started_at_ms=:s, paused_remaining_ms=NULL WHERE slug=:slug");
             $u->execute([':s' => $started, ':slug' => $slug]);
+            lc_audit('cronometro.start', 'cronometro', (int) $c['id'], ['slug' => $slug, 'nome' => $c['nome'], 'retomado_de_pausa' => $c['status'] === 'PAUSADO']);
             lc_json(['ok' => true, 'status' => 'RODANDO', 'started_at_ms' => $started, 'server_time_ms' => $now]);
         }
 
@@ -211,12 +223,14 @@ try {
             if ($remaining < 0) $remaining = 0;
             $u = $db->prepare("UPDATE labclock_cronometros SET status='PAUSADO', paused_remaining_ms=:r, started_at_ms=NULL WHERE slug=:slug");
             $u->execute([':r' => $remaining, ':slug' => $slug]);
+            lc_audit('cronometro.pause', 'cronometro', (int) $c['id'], ['slug' => $slug, 'nome' => $c['nome'], 'restante_ms' => $remaining]);
             lc_json(['ok' => true, 'status' => 'PAUSADO', 'paused_remaining_ms' => $remaining, 'server_time_ms' => $now]);
         }
 
         if ($acao === 'reset') {
             $u = $db->prepare("UPDATE labclock_cronometros SET status='PARADO', started_at_ms=NULL, paused_remaining_ms=NULL WHERE slug=:slug");
             $u->execute([':slug' => $slug]);
+            lc_audit('cronometro.reset', 'cronometro', (int) $c['id'], ['slug' => $slug, 'nome' => $c['nome']]);
             lc_json(['ok' => true, 'status' => 'PARADO', 'server_time_ms' => $now]);
         }
 
@@ -227,7 +241,7 @@ try {
     if ($method === 'DELETE' && $slug !== null) {
         $user = lc_require_login();
         // Mesma regra de ownership do PATCH
-        $stmt = $db->prepare("SELECT dono_id FROM labclock_cronometros WHERE slug = :s");
+        $stmt = $db->prepare("SELECT id, dono_id, nome FROM labclock_cronometros WHERE slug = :s");
         $stmt->execute([':s' => $slug]);
         $c = $stmt->fetch();
         if (!$c) lc_json(['error' => 'cronômetro não encontrado'], 404);
@@ -236,6 +250,7 @@ try {
         }
         $del = $db->prepare("DELETE FROM labclock_cronometros WHERE slug = :s");
         $del->execute([':s' => $slug]);
+        lc_audit('cronometro.deletar', 'cronometro', (int) $c['id'], ['slug' => $slug, 'nome' => $c['nome']]);
         lc_json(['ok' => true, 'affected' => $del->rowCount(), 'server_time_ms' => $now]);
     }
 

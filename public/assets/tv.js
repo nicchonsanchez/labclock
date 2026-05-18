@@ -22,6 +22,11 @@ $(function () {
     bindFullscreen();
     bindRelogio();
     bindWakeLock();
+    if (window.lcNotify) {
+        lcNotify.init();
+        // TV: pede permissão no 1o clique em qualquer lugar (gesto de usuário necessário)
+        $(document).one('click', function () { lcNotify.pedirPermissao(); });
+    }
     carregarGrupo(slug);
     setInterval(function () { carregarGrupo(slug); }, POLL_MS);
     setInterval(atualizarDisplays, Math.floor(1000 / DISPLAY_FPS));
@@ -158,6 +163,14 @@ function atualizarDisplays() {
                 avisarFim();
                 $card.addClass('terminado');
                 setTimeout(function () { $card.removeClass('terminado'); }, 3000);
+                if (window.lcNotify) {
+                    lcNotify.disparar({
+                        titulo: 'Cronômetro terminou',
+                        body:   (c.nome || c.slug) + ' chegou ao zero.',
+                        slug:   c.slug,
+                        url:    '/labclock/c/' + c.slug + '/',
+                    });
+                }
             }
         } else if (c.status === 'PARADO') {
             estado.beepEm[c.slug] = false; // reset pra próximo ciclo

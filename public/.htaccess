@@ -19,9 +19,10 @@
   Require all denied
 </FilesMatch>
 
-<FilesMatch "^(_config|_db|_util|_auth)\.php$">
+<FilesMatch "^(_config|_db|_util|_auth|_audit)\.php$">
   Require all denied
 </FilesMatch>
+# _setup-*.php fica acessível pra rodar 1x; deletar manualmente depois de usar
 
 RedirectMatch 403 /\.git
 RedirectMatch 403 /tarefas-md

@@ -66,3 +66,21 @@ CREATE TABLE IF NOT EXISTS labclock_grupo_cronometros (
 -- ALTER TABLE labclock_cronometros ADD COLUMN sala_id INT UNSIGNED NULL AFTER dono_id;
 -- ALTER TABLE labclock_cronometros ADD INDEX idx_sala (sala_id);
 -- ALTER TABLE labclock_cronometros ADD CONSTRAINT fk_cron_sala FOREIGN KEY (sala_id) REFERENCES labclock_salas(id) ON DELETE SET NULL;
+
+-- ===== Fase 6: audit log =====
+CREATE TABLE IF NOT EXISTS labclock_audit_log (
+  id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  usuario_id    INT UNSIGNED NULL,                 -- soft FK; pode ficar orfão se user for deletado
+  usuario_email VARCHAR(120) NULL,                 -- snapshot pra sobreviver a delete
+  acao          VARCHAR(60) NOT NULL,              -- ex: 'cronometro.start', 'login.success'
+  entidade_tipo VARCHAR(30) NULL,                  -- ex: 'cronometro', 'grupo', 'usuario'
+  entidade_id   INT UNSIGNED NULL,
+  detalhes      JSON NULL,                         -- snapshot de campos relevantes (nome, slug, etc.)
+  ip            VARCHAR(45) NULL,                  -- IPv4/IPv6
+  user_agent    VARCHAR(255) NULL,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_created (created_at),
+  INDEX idx_usuario (usuario_id),
+  INDEX idx_acao (acao),
+  INDEX idx_entidade (entidade_tipo, entidade_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -10,6 +10,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/_db.php';
 require_once __DIR__ . '/_util.php';
 require_once __DIR__ . '/_auth.php';
+require_once __DIR__ . '/_audit.php';
 
 header('X-Content-Type-Options: nosniff');
 
@@ -25,11 +26,20 @@ try {
             lc_json(['error' => 'email e senha obrigatórios'], 422);
         }
         $u = lc_login($email, $senha);
-        if (!$u) lc_json(['error' => 'credenciais inválidas'], 401);
+        if (!$u) {
+            // Audit precisa ser chamado ANTES de lc_json (que faz exit).
+            // Sem sessão (login falhou), gravamos usuario_email tentado em detalhes.
+            lc_audit('login.fail', null, null, ['email_tentado' => strtolower($email)]);
+            lc_json(['error' => 'credenciais inválidas'], 401);
+        }
+        lc_audit('login.success', 'usuario', (int) $u['id'], ['email' => $u['email']]);
         lc_json(['ok' => true, 'user' => $u]);
     }
 
     if ($method === 'POST' && $acao === 'logout') {
+        // Audit antes de destruir a sessão (depois, lc_user() retorna null).
+        $logged = lc_user();
+        if ($logged) lc_audit('logout', 'usuario', (int) $logged['id']);
         lc_logout();
         lc_json(['ok' => true]);
     }

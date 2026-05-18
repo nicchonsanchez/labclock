@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grupo · LabClock</title>
+  <title>Auditoria · LabClock</title>
   <meta name="theme-color" content="#F5F0E6" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#11141C" media="(prefers-color-scheme: dark)">
+  <meta name="robots" content="noindex">
+
   <link rel="icon" href="https://nicchon.com/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
+
   <script>
     (function () {
       try {
@@ -25,9 +28,9 @@
 <body>
 
 <header class="site-header">
-  <a href="./" class="back-link" aria-label="Voltar pro labclock">
+  <a href="./admin.html" class="back-link" aria-label="Voltar pro admin">
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-    <span class="back-link-text">labclock</span>
+    <span class="back-link-text">admin</span>
   </a>
   <button type="button" class="theme-toggle" aria-label="Alternar tema" title="Alternar tema">
     <svg class="theme-icon theme-icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
@@ -36,32 +39,51 @@
 </header>
 
 <main class="container">
-  <section class="hero" id="grupo-header">
-    <p class="font-mono-meta" id="grupo-codigo">Carregando…</p>
-    <h1 id="grupo-nome">—</h1>
-    <p class="lede" id="grupo-info">—</p>
+  <section class="hero">
+    <p class="font-mono-meta">labclock / admin / auditoria</p>
+    <h1>Auditoria de ações.</h1>
+    <p class="lede">Histórico append-only de ações no sistema. Login, cronômetros, grupos, salas, usuários — tudo é registrado com IP e user-agent.</p>
+  </section>
+
+  <section class="bloco-filtros">
+    <form id="form-filtros" class="form-filtros">
+      <div class="field">
+        <label for="filtro-usuario">Usuário</label>
+        <select id="filtro-usuario"><option value="">— todos —</option></select>
+      </div>
+      <div class="field">
+        <label for="filtro-acao">Ação</label>
+        <select id="filtro-acao"><option value="">— todas —</option></select>
+      </div>
+      <div class="field">
+        <label for="filtro-desde">Desde</label>
+        <input type="date" id="filtro-desde">
+      </div>
+      <div class="field">
+        <label for="filtro-ate">Até</label>
+        <input type="date" id="filtro-ate">
+      </div>
+      <div class="field field-acoes">
+        <button type="submit" class="btn-primary">Filtrar</button>
+        <button type="button" class="btn-sec" id="btn-limpar">Limpar</button>
+      </div>
+    </form>
   </section>
 
   <section class="bloco-lista">
-    <div class="grupo-actions">
-      <button type="button" id="btn-add" class="btn-primary" hidden>+ Adicionar cronômetro</button>
-      <a href="#" id="btn-tv" class="btn-sec" target="_blank" rel="noopener">Modo TV ↗</a>
-      <button type="button" id="btn-copiar" class="btn-sec">Copiar link</button>
+    <div class="auditoria-meta" id="auditoria-meta">Carregando…</div>
+    <div id="tabela-auditoria" class="auditoria-tabela" aria-busy="true">
+      <p class="state-msg">Carregando…</p>
     </div>
-    <div id="add-form" class="add-form" hidden>
-      <input type="text" id="slug-add" placeholder="slug do cronômetro (ex: abc12xyz)" maxlength="12">
-      <button type="button" class="btn-primary" id="btn-add-confirm">Adicionar</button>
-      <button type="button" class="btn-sec"     id="btn-add-cancel">Cancelar</button>
-      <p class="erro" id="erro-add" hidden></p>
-    </div>
-    <div id="lista-grupo" class="grid-cronometros" aria-busy="true">
-      <p class="state-msg">Carregando cronômetros…</p>
+    <div class="auditoria-paginacao">
+      <button type="button" class="btn-sec" id="btn-anterior" disabled>← Anterior</button>
+      <span id="paginacao-info" class="font-mono-meta"></span>
+      <button type="button" class="btn-sec" id="btn-proxima" disabled>Próxima →</button>
     </div>
   </section>
 </main>
 
 <script src="assets/jquery-3.6.1.min.js"></script>
-<script src="assets/notify.js"></script>
-<script src="assets/grupo.js"></script>
+<script src="assets/auditoria.js"></script>
 </body>
 </html>

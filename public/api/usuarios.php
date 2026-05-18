@@ -11,6 +11,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/_db.php';
 require_once __DIR__ . '/_util.php';
 require_once __DIR__ . '/_auth.php';
+require_once __DIR__ . '/_audit.php';
 
 header('X-Content-Type-Options: nosniff');
 
@@ -54,6 +55,7 @@ try {
 
         $u = $db->prepare("UPDATE labclock_usuarios SET senha_hash = :h WHERE id = :id");
         $u->execute([':h' => lc_hash_senha($nova), ':id' => $me['id']]);
+        lc_audit('usuario.trocar_senha', 'usuario', (int) $me['id']);
         lc_json(['ok' => true]);
     }
 
@@ -87,6 +89,7 @@ try {
                 ':p' => $papel,
             ]);
             $newId = (int) $db->lastInsertId();
+            lc_audit('usuario.criar', 'usuario', $newId, ['email' => $email, 'nome' => $nome, 'papel' => $papel]);
             lc_json(['ok' => true, 'id' => $newId, 'email' => $email, 'nome' => $nome, 'papel' => $papel], 201);
         } catch (PDOException $e) {
             if (str_contains($e->getMessage(), 'Duplicate')) {
@@ -100,8 +103,15 @@ try {
     if ($method === 'DELETE' && $id !== null) {
         exigir_admin($me);
         if ($id === (int) $me['id']) lc_json(['error' => 'não pode remover a si mesmo'], 422);
+        // Captura email antes de deletar pra registrar snapshot no audit.
+        $info = $db->prepare("SELECT email, nome FROM labclock_usuarios WHERE id = :id");
+        $info->execute([':id' => $id]);
+        $alvo = $info->fetch();
         $stmt = $db->prepare("DELETE FROM labclock_usuarios WHERE id = :id");
         $stmt->execute([':id' => $id]);
+        if ($stmt->rowCount() > 0 && $alvo) {
+            lc_audit('usuario.deletar', 'usuario', $id, ['email' => $alvo['email'], 'nome' => $alvo['nome']]);
+        }
         lc_json(['ok' => true, 'affected' => $stmt->rowCount()]);
     }
 

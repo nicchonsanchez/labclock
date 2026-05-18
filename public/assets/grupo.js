@@ -21,6 +21,11 @@ $(function () {
     bindThemeToggle();
     bindCompartilhar(slug);
     bindAddCronometro(slug);
+    if (window.lcNotify) {
+        lcNotify.init();
+        // Grupo tem N cronômetros — pede permissão no primeiro clique em qualquer cronômetro
+        $(document).one('click', '.cronometro-item-grupo', function () { lcNotify.pedirPermissao(); });
+    }
     carregarUser();
     carregarGrupo(slug);
     setInterval(function () { carregarGrupo(slug); }, POLL_MS);
@@ -112,11 +117,19 @@ function atualizarDisplays() {
         var rem = calcularRemaining(c, serverNow);
         $('.cron-display[data-slug="' + c.slug + '"]').text(formatar(rem));
 
-        // Beep + classe atrasado quando cruza zero (cada cronômetro independente)
+        // Beep + notificação SO + classe atrasado quando cruza zero (cada cronômetro independente)
         if (c.status === 'RODANDO') {
             if (rem <= 0 && !estado.beepEm[c.slug]) {
                 estado.beepEm[c.slug] = true;
                 avisarFim();
+                if (window.lcNotify) {
+                    lcNotify.disparar({
+                        titulo: 'Cronômetro terminou',
+                        body:   (c.nome || c.slug) + ' chegou ao zero.',
+                        slug:   c.slug,
+                        url:    '/labclock/c/' + c.slug + '/',
+                    });
+                }
             }
             var $card = $('.cronometro-item-grupo[data-slug="' + c.slug + '"]');
             if (rem < 0) $card.addClass('atrasado'); else $card.removeClass('atrasado');

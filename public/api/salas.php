@@ -6,6 +6,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/_db.php';
 require_once __DIR__ . '/_util.php';
 require_once __DIR__ . '/_auth.php';
+require_once __DIR__ . '/_audit.php';
 
 header('X-Content-Type-Options: nosniff');
 
@@ -34,7 +35,9 @@ try {
 
         $stmt = $db->prepare("INSERT INTO labclock_salas (nome, ordem) VALUES (:n, :o)");
         $stmt->execute([':n' => $nome, ':o' => $ordem]);
-        lc_json(['ok' => true, 'id' => (int) $db->lastInsertId(), 'nome' => $nome, 'ordem' => $ordem], 201);
+        $newId = (int) $db->lastInsertId();
+        lc_audit('sala.criar', 'sala', $newId, ['nome' => $nome, 'ordem' => $ordem]);
+        lc_json(['ok' => true, 'id' => $newId, 'nome' => $nome, 'ordem' => $ordem], 201);
     }
 
     if ($method === 'PATCH' && $id !== null) {
@@ -55,6 +58,10 @@ try {
         $sql = "UPDATE labclock_salas SET " . implode(', ', $sets) . " WHERE id = :id";
         $u = $db->prepare($sql);
         $u->execute($params);
+        lc_audit('sala.editar', 'sala', $id, [
+            'nome_novo' => $params[':n'] ?? null,
+            'ordem_nova' => $params[':o'] ?? null,
+        ]);
         lc_json(['ok' => true]);
     }
 
@@ -62,6 +69,7 @@ try {
         // Cronômetros com sala_id desta sala vão pra sala_id=NULL (ON DELETE SET NULL)
         $stmt = $db->prepare("DELETE FROM labclock_salas WHERE id = :id");
         $stmt->execute([':id' => $id]);
+        if ($stmt->rowCount() > 0) lc_audit('sala.deletar', 'sala', $id);
         lc_json(['ok' => true, 'affected' => $stmt->rowCount()]);
     }
 

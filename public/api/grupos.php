@@ -14,6 +14,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/_db.php';
 require_once __DIR__ . '/_util.php';
 require_once __DIR__ . '/_auth.php';
+require_once __DIR__ . '/_audit.php';
 
 header('X-Content-Type-Options: nosniff');
 
@@ -100,6 +101,8 @@ try {
             $s = lc_gerar_slug();
             try {
                 $ins->execute([':s' => $s, ':d' => $me['id'], ':n' => $nome]);
+                $newId = (int) $db->lastInsertId();
+                lc_audit('grupo.criar', 'grupo', $newId, ['slug' => $s, 'nome' => $nome]);
                 lc_json(['ok' => true, 'slug' => $s, 'nome' => $nome, 'dono_id' => (int) $me['id']], 201);
             } catch (PDOException $e) {
                 if (!str_contains($e->getMessage(), 'Duplicate')) throw $e;
@@ -127,6 +130,7 @@ try {
             if ($nome === '' || mb_strlen($nome) > 120) lc_json(['error' => 'nome inválido'], 422);
             $u = $db->prepare("UPDATE labclock_grupos SET nome = :n WHERE id = :id");
             $u->execute([':n' => $nome, ':id' => $gid]);
+            lc_audit('grupo.editar', 'grupo', $gid, ['slug' => $slug, 'nome_novo' => $nome]);
             lc_json(['ok' => true]);
         }
 
@@ -134,6 +138,7 @@ try {
         if ($method === 'DELETE' && $acao === null) {
             $del = $db->prepare("DELETE FROM labclock_grupos WHERE id = :id");
             $del->execute([':id' => $gid]);
+            lc_audit('grupo.deletar', 'grupo', $gid, ['slug' => $slug]);
             lc_json(['ok' => true]);
         }
 
@@ -155,6 +160,7 @@ try {
             try {
                 $ins = $db->prepare("INSERT INTO labclock_grupo_cronometros (grupo_id, cronometro_id, ordem) VALUES (:g, :c, :o)");
                 $ins->execute([':g' => $gid, ':c' => (int) $c['id'], ':o' => $novaOrdem]);
+                lc_audit('grupo.add_cron', 'grupo', $gid, ['grupo_slug' => $slug, 'cronometro_slug' => $cronSlug, 'cronometro_id' => (int) $c['id']]);
                 lc_json(['ok' => true, 'cronometro_slug' => $cronSlug, 'ordem' => $novaOrdem]);
             } catch (PDOException $e) {
                 if (str_contains($e->getMessage(), 'Duplicate')) lc_json(['error' => 'cronômetro já está no grupo'], 409);
@@ -170,6 +176,9 @@ try {
                 JOIN labclock_cronometros c ON c.id = gc.cronometro_id
                 WHERE gc.grupo_id = :g AND c.slug = :s");
             $del->execute([':g' => $gid, ':s' => $cronSlug]);
+            if ($del->rowCount() > 0) {
+                lc_audit('grupo.remove_cron', 'grupo', $gid, ['grupo_slug' => $slug, 'cronometro_slug' => $cronSlug]);
+            }
             lc_json(['ok' => true, 'affected' => $del->rowCount()]);
         }
     }
