@@ -340,20 +340,62 @@ function avisarFim() {
 */
 
 function bindCompartilhar(slug) {
-    var url = location.origin + location.pathname.replace(/\/cronometro\.html$/, '/c/' + slug + '/').replace(/[^/]+$/, 'c/' + slug + '/');
-    // Simplificação: usa a URL atual se já estiver no formato bonito; senão, monta
-    if (location.pathname.indexOf('/c/') === -1) {
-        url = location.origin + location.pathname.replace(/cronometro\.html.*$/, '') + 'c/' + slug + '/';
-    } else {
-        url = location.href;
-    }
+    // Sempre monta a URL canônica /labclock/c/{slug}/ — independente de como o user
+    // chegou (rewrite ou ?slug=). Evita query string espúria e duplicidade de slug.
+    var match = location.pathname.match(/^(.*?)\/(?:c\/[a-z0-9]{4,12}\/?|cronometro\.html)$/);
+    var base = match ? match[1] : location.pathname.replace(/\/[^/]*$/, '');
+    var url = location.origin + base + '/c/' + slug + '/';
+
     $('#share-url').val(url);
+
     $('#copy-url').on('click', function () {
-        navigator.clipboard.writeText(url).then(function () {
-            $('#copy-url').text('Copiado!');
-            setTimeout(function () { $('#copy-url').text('Copiar link'); }, 2000);
-        });
+        copiarParaClipboard(url, $('#copy-url'), $('#share-url'));
     });
+}
+
+// Copia pra clipboard com fallback robusto. Funciona em iOS Safari, contextos
+// inseguros e quando navigator.clipboard nao existe.
+function copiarParaClipboard(texto, $btn, $inputFallback) {
+    var textoOriginal = $btn.text();
+    var sucesso = function () {
+        $btn.text('Copiado!');
+        setTimeout(function () { $btn.text(textoOriginal); }, 2000);
+    };
+    var falha = function (motivo) {
+        // Seleciona o input pra user copiar manualmente com Ctrl+C / Cmd+C
+        if ($inputFallback && $inputFallback.length) {
+            $inputFallback[0].focus();
+            $inputFallback[0].select();
+            $inputFallback[0].setSelectionRange(0, 99999); // iOS
+        }
+        $btn.text('Selecionado — Ctrl+C pra copiar');
+        setTimeout(function () { $btn.text(textoOriginal); }, 4000);
+    };
+
+    // Caminho 1: Clipboard API moderna (precisa de HTTPS + permissao)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(sucesso).catch(function (err) {
+            // Caminho 2: fallback antigo via execCommand
+            tentarExecCommand(texto, $inputFallback, sucesso, falha);
+        });
+        return;
+    }
+
+    // Caminho 2 direto se nao tem Clipboard API
+    tentarExecCommand(texto, $inputFallback, sucesso, falha);
+}
+
+function tentarExecCommand(texto, $inputFallback, sucesso, falha) {
+    try {
+        if ($inputFallback && $inputFallback.length) {
+            $inputFallback[0].focus();
+            $inputFallback[0].select();
+            $inputFallback[0].setSelectionRange(0, 99999);
+        }
+        var ok = document.execCommand && document.execCommand('copy');
+        if (ok) { sucesso(); return; }
+    } catch (e) { /* segue pra falha */ }
+    falha('execCommand falhou');
 }
 
 

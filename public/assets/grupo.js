@@ -199,16 +199,53 @@ function bindAddCronometro(slug) {
 */
 
 function bindCompartilhar(slug) {
+    // URL canonica /labclock/g/{slug}/ independente de rota usada
+    var match = location.pathname.match(/^(.*?)\/(?:g\/[a-z0-9]{4,12}\/?|grupo\.html)$/);
+    var base = match ? match[1] : location.pathname.replace(/\/[^/]*$/, '');
+    var url = location.origin + base + '/g/' + slug + '/';
+
     $('#btn-copiar').on('click', function () {
-        var url = location.origin + location.pathname.replace(/grupo\.html.*$/, '') + (location.pathname.indexOf('/g/') !== -1 ? '' : 'g/' + slug + '/');
-        if (location.pathname.indexOf('/g/') !== -1) url = location.href;
-        navigator.clipboard.writeText(url).then(function () {
-            var $b = $('#btn-copiar');
-            var orig = $b.text();
-            $b.text('Copiado!');
-            setTimeout(function () { $b.text(orig); }, 2000);
-        });
+        copiarParaClipboard(url, $('#btn-copiar'));
     });
+}
+
+// Copia com fallback (mesmo helper que cronometro.js, duplicado pra nao criar dependencia)
+function copiarParaClipboard(texto, $btn) {
+    var textoOriginal = $btn.text();
+    var sucesso = function () {
+        $btn.text('Copiado!');
+        setTimeout(function () { $btn.text(textoOriginal); }, 2000);
+    };
+    var falha = function () {
+        // Cria um input temporario, seleciona, alerta o user pra copiar manualmente
+        prompt('Copie a URL abaixo manualmente:', texto);
+        $btn.text(textoOriginal);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(sucesso).catch(function () {
+            tentarExecCommand(texto, sucesso, falha);
+        });
+        return;
+    }
+    tentarExecCommand(texto, sucesso, falha);
+}
+
+function tentarExecCommand(texto, sucesso, falha) {
+    try {
+        var ta = document.createElement('textarea');
+        ta.value = texto;
+        ta.style.position = 'fixed';
+        ta.style.top = '0';
+        ta.style.left = '0';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        var ok = document.execCommand && document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) { sucesso(); return; }
+    } catch (e) { /* segue pra falha */ }
+    falha();
 }
 
 
