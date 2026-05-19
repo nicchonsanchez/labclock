@@ -4,7 +4,7 @@
     Wake Lock API mantém tela ligada. QR code aponta pra URL /g/{slug}/ pra pareamento celular.
 */
 
-var API_GRUPO = '../api/grupos.php';
+var API_GRUPO = '/labclock/api/grupos.php';
 var POLL_MS = 3000;
 var DISPLAY_FPS = 10;
 
@@ -87,7 +87,7 @@ function carregarGrupo(slug) {
 
         if (primeira) {
             // Gera QR code uma vez (URL não muda)
-            var url = location.origin + location.pathname.replace(/tv\.html.*$/, '').replace(/\/tv\/[^/]+\/?$/, '/') + 'g/' + slug + '/';
+            var url = location.origin + '/labclock/g/' + slug + '/';
             $('#tv-url-mobile').text(url.replace(/^https?:\/\//, ''));
             new QRCode(document.getElementById('tv-qr'), {
                 text: url,

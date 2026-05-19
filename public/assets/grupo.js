@@ -3,7 +3,7 @@
     /g/{slug}/ → polling 3s + display local 10fps (mesma estratégia da página individual).
 */
 
-var API_GRUPO = '../api/grupos.php';
+var API_GRUPO = '/labclock/api/grupos.php';
 var POLL_MS = 3000;
 var DISPLAY_FPS = 10;
 
@@ -40,7 +40,7 @@ function obterSlugDaURL() {
 }
 
 function carregarUser() {
-    $.getJSON('../api/auth.php?acao=me').done(function (resp) {
+    $.getJSON('/labclock/api/auth.php?acao=me').done(function (resp) {
         estado.user = resp.user;
         atualizarPermissoes();
     });
@@ -60,7 +60,7 @@ function carregarGrupo(slug) {
         $('#grupo-codigo').text('Grupo · ' + g.slug);
         $('#grupo-nome').text(g.nome);
         $('#grupo-info').text('Dono: ' + g.dono_nome + ' · ' + g.cronometros.length + ' cronômetro' + (g.cronometros.length === 1 ? '' : 's'));
-        $('#btn-tv').attr('href', '../tv/' + slug + '/');
+        $('#btn-tv').attr('href', '/labclock/tv/' + slug + '/');
         renderLista();
         atualizarPermissoes();
     }).fail(function (xhr) {
@@ -84,7 +84,7 @@ function renderLista() {
         return (
             '<article class="' + classes.join(' ') + '" data-slug="' + esc(c.slug) + '">' +
               '<header class="cron-header">' +
-                '<a href="../c/' + esc(c.slug) + '/" class="cron-titulo">' +
+                '<a href="/labclock/c/' + esc(c.slug) + '/" class="cron-titulo">' +
                   '<h3>' + esc(c.nome) + '</h3>' +
                   (c.sala_nome ? '<span class="cron-sala">' + esc(c.sala_nome) + '</span>' : '') +
                 '</a>' +
@@ -106,7 +106,7 @@ function renderLista() {
             method: 'DELETE',
         }).done(function () { carregarGrupo(estado.grupo.slug); })
           .fail(function (xhr) {
-              if (xhr.status === 401) { alert('Sessão expirou. Logue novamente.'); location.href = '../login.html'; return; }
+              if (xhr.status === 401) { alert('Sessão expirou. Logue novamente.'); location.href = '/labclock/login.html'; return; }
               alert('Falha (HTTP ' + (xhr.status || '0') + '): ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro de conexão'));
           });
     });
@@ -199,11 +199,7 @@ function bindAddCronometro(slug) {
 */
 
 function bindCompartilhar(slug) {
-    // URL canonica /labclock/g/{slug}/ independente de rota usada
-    var match = location.pathname.match(/^(.*?)\/(?:g\/[a-z0-9]{4,12}\/?|grupo\.html)$/);
-    var base = match ? match[1] : location.pathname.replace(/\/[^/]*$/, '');
-    var url = location.origin + base + '/g/' + slug + '/';
-
+    var url = location.origin + '/labclock/g/' + slug + '/';
     $('#btn-copiar').on('click', function () {
         copiarParaClipboard(url, $('#btn-copiar'));
     });

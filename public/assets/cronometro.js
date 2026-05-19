@@ -8,7 +8,7 @@
     - Quando cruza 0, dispara beep local (1 vez)
 */
 
-var API = '../api/cronometros.php';
+var API = '/labclock/api/cronometros.php';
 var POLL_MS = 3000;
 var DISPLAY_FPS = 10;
 
@@ -38,7 +38,7 @@ $(function () {
 });
 
 function carregarUser() {
-    $.getJSON('../api/auth.php?acao=me').done(function (resp) {
+    $.getJSON('/labclock/api/auth.php?acao=me').done(function (resp) {
         estado.user = resp.user;
         atualizarPermissoes();
     });
@@ -157,7 +157,7 @@ function bindBotoes(slug) {
         }).fail(function (xhr) {
             if (xhr.status === 401) {
                 alert('Sua sessão expirou. Faça login pra controlar este cronômetro.');
-                location.href = '../login.html';
+                location.href = '/labclock/login.html';
                 return;
             }
             var msg = (xhr.responseJSON && xhr.responseJSON.error) || (xhr.responseText ? xhr.responseText.substring(0, 140) : 'erro de conexão');
@@ -230,7 +230,7 @@ function bindEdicaoInline(slug) {
             }).fail(function (xhr) {
                 if (xhr.status === 401) {
                     alert('Sua sessão expirou. Faça login pra editar.');
-                    location.href = '../login.html';
+                    location.href = '/labclock/login.html';
                     return;
                 }
                 alert('Falha (HTTP ' + (xhr.status || '0') + '): ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro de conexão'));
@@ -277,7 +277,7 @@ function bindEdicaoInline(slug) {
             }).fail(function (xhr) {
                 if (xhr.status === 401) {
                     alert('Sua sessão expirou. Faça login pra editar.');
-                    location.href = '../login.html';
+                    location.href = '/labclock/login.html';
                     return;
                 }
                 alert('Falha (HTTP ' + (xhr.status || '0') + '): ' + ((xhr.responseJSON && xhr.responseJSON.error) || 'erro de conexão'));
@@ -340,12 +340,8 @@ function avisarFim() {
 */
 
 function bindCompartilhar(slug) {
-    // Sempre monta a URL canônica /labclock/c/{slug}/ — independente de como o user
-    // chegou (rewrite ou ?slug=). Evita query string espúria e duplicidade de slug.
-    var match = location.pathname.match(/^(.*?)\/(?:c\/[a-z0-9]{4,12}\/?|cronometro\.html)$/);
-    var base = match ? match[1] : location.pathname.replace(/\/[^/]*$/, '');
-    var url = location.origin + base + '/c/' + slug + '/';
-
+    // URL canônica /labclock/c/{slug}/ — independente da rota usada pra chegar aqui
+    var url = location.origin + '/labclock/c/' + slug + '/';
     $('#share-url').val(url);
 
     $('#copy-url').on('click', function () {
