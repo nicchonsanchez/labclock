@@ -159,21 +159,132 @@ function calcularRemaining(c, serverNow) {
 */
 
 function bindAddCronometro(slug) {
+    // Cache dos cronometros disponiveis no tenant (todos menos os ja no grupo).
+    // Carrega na hora de abrir o form.
+    var disponiveis = [];
+    var idxFocado = -1;
+
     $('#btn-add').on('click', function () {
         $('#add-form').prop('hidden', false);
         $('#slug-add').val('').focus();
+        $('#erro-add').hide();
+        carregarDisponiveis();
     });
     $('#btn-add-cancel').on('click', function () {
         $('#add-form').prop('hidden', true);
         $('#erro-add').hide();
+        fecharLista();
     });
     $('#btn-add-confirm').on('click', enviarAdd);
-    $('#slug-add').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); enviarAdd(); } });
+
+    // Toggle dropdown
+    $('#slug-add-toggle').on('click', function (e) {
+        e.stopPropagation();
+        if ($('#slug-add-list').prop('hidden')) abrirLista(); else fecharLista();
+    });
+
+    // Input: filtra a lista em tempo real + abre dropdown
+    $('#slug-add').on('focus', abrirLista);
+    $('#slug-add').on('input', function () {
+        renderLista($(this).val().trim().toLowerCase());
+        abrirLista();
+    });
+
+    // Teclado: setas + Enter pra navegar/escolher
+    $('#slug-add').on('keydown', function (e) {
+        var $items = $('#slug-add-list .combo-item');
+        if (e.key === 'ArrowDown') { e.preventDefault(); abrirLista(); idxFocado = Math.min(idxFocado + 1, $items.length - 1); destacar($items); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); idxFocado = Math.max(idxFocado - 1, 0); destacar($items); }
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (idxFocado >= 0 && $items.length > 0) {
+                selecionar($items.eq(idxFocado).data('slug'));
+            } else {
+                enviarAdd(); // permite digitar slug exato + Enter (compat)
+            }
+        }
+        else if (e.key === 'Escape') { fecharLista(); }
+    });
+
+    // Click fora fecha
+    $(document).on('click.combobox', function (e) {
+        if (!$(e.target).closest('.combo-wrap').length) fecharLista();
+    });
+
+    function destacar($items) {
+        $items.removeClass('combo-item-ativo');
+        if (idxFocado >= 0) {
+            var $it = $items.eq(idxFocado).addClass('combo-item-ativo');
+            // scroll into view se necessario
+            var el = $it[0];
+            if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    function abrirLista() {
+        $('#slug-add-list').prop('hidden', false);
+        $('.combo-wrap').attr('aria-expanded', 'true').addClass('open');
+    }
+    function fecharLista() {
+        $('#slug-add-list').prop('hidden', true);
+        $('.combo-wrap').attr('aria-expanded', 'false').removeClass('open');
+        idxFocado = -1;
+    }
+
+    function carregarDisponiveis() {
+        $.getJSON('/labclock/api/cronometros.php').done(function (resp) {
+            var jaNoGrupo = {};
+            if (estado.grupo && estado.grupo.cronometros) {
+                estado.grupo.cronometros.forEach(function (c) { jaNoGrupo[c.slug] = true; });
+            }
+            disponiveis = (resp.cronometros || []).filter(function (c) { return !jaNoGrupo[c.slug]; });
+            renderLista('');
+        }).fail(function () {
+            disponiveis = [];
+            renderLista('');
+        });
+    }
+
+    function renderLista(filtro) {
+        var $list = $('#slug-add-list');
+        var itens = filtro
+            ? disponiveis.filter(function (c) {
+                return c.nome.toLowerCase().indexOf(filtro) !== -1
+                    || c.slug.toLowerCase().indexOf(filtro) !== -1
+                    || (c.sala_nome && c.sala_nome.toLowerCase().indexOf(filtro) !== -1);
+            })
+            : disponiveis.slice();
+        if (itens.length === 0) {
+            var msg = disponiveis.length === 0 ? 'nenhum cronômetro disponível' : 'nenhum resultado';
+            $list.html('<li class="combo-empty">' + msg + '</li>');
+            return;
+        }
+        $list.empty();
+        itens.forEach(function (c) {
+            var sala = c.sala_nome ? '<span class="combo-sala">' + esc(c.sala_nome) + '</span>' : '';
+            var $li = $(
+                '<li class="combo-item" role="option" data-slug="' + esc(c.slug) + '">' +
+                  '<span class="combo-nome">' + esc(c.nome) + '</span>' +
+                  sala +
+                  '<span class="combo-slug">' + esc(c.slug) + '</span>' +
+                '</li>'
+            );
+            $li.on('click', function () { selecionar(c.slug); });
+            $list.append($li);
+        });
+        idxFocado = -1;
+    }
+
+    function selecionar(cronSlug) {
+        $('#slug-add').val(cronSlug);
+        fecharLista();
+        enviarAdd();
+    }
 
     function enviarAdd() {
         var s = $('#slug-add').val().trim().toLowerCase();
         if (!/^[a-z0-9]{4,12}$/.test(s)) {
-            $('#erro-add').text('Slug inválido (4-12 letras/números)').show();
+            $('#erro-add').text('Selecione um cronômetro da lista ou digite um slug válido (4-12 chars).').show();
             return;
         }
         $.ajax({
@@ -184,6 +295,8 @@ function bindAddCronometro(slug) {
         }).done(function () {
             $('#add-form').prop('hidden', true);
             $('#erro-add').hide();
+            $('#slug-add').val('');
+            fecharLista();
             carregarGrupo(slug);
         }).fail(function (xhr) {
             if (xhr.status === 401) { $('#erro-add').text('Sessão expirou — logue novamente').show(); return; }

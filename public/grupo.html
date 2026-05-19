@@ -49,7 +49,13 @@
       <button type="button" id="btn-copiar" class="btn-sec">Copiar link</button>
     </div>
     <div id="add-form" class="add-form" hidden>
-      <input type="text" id="slug-add" placeholder="slug do cronômetro (ex: abc12xyz)" maxlength="12">
+      <div class="combo-wrap">
+        <input type="text" id="slug-add" placeholder="digite nome ou slug pra filtrar…" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="slug-add-list">
+        <button type="button" class="combo-toggle" id="slug-add-toggle" aria-label="Abrir lista de cronômetros" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <ul id="slug-add-list" class="combo-list" role="listbox" hidden></ul>
+      </div>
       <button type="button" class="btn-primary" id="btn-add-confirm">Adicionar</button>
       <button type="button" class="btn-sec"     id="btn-add-cancel">Cancelar</button>
       <p class="erro" id="erro-add" hidden></p>
